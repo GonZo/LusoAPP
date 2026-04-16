@@ -508,6 +508,8 @@ class ConnectionNotifier extends StateNotifier<TransportState> {
   /// packet.  For outgoing channel messages the heard count on the matching
   /// [ChatMessage] is incremented.
   void _processLogRxData(Uint8List data) {
+    _ref.read(rxLogProvider.notifier).recordFromLogRxFrame(data);
+
     final parsed = parseLogRxData(data);
     if (parsed == null || parsed.packet == null) return;
 
@@ -657,6 +659,10 @@ class ConnectionNotifier extends StateNotifier<TransportState> {
       timeout: const Duration(seconds: 10),
     );
     log.d('Contacts: ${contactsResp?.runtimeType ?? "TIMEOUT"}');
+
+    // 3a. One-shot migration of any pre-fix app-local favourites to the
+    // radio's `flags` byte. Idempotent: clears SharedPreferences on success.
+    unawaited(_migrateLegacyFavorites(_ref, service).catchError((_) {}));
 
     // 4. Channels — send all requests with a short stagger and collect
     //    responses in parallel rather than round-tripping one at a time.
@@ -864,6 +870,24 @@ class ContactsNotifier extends StateNotifier<List<Contact>> {
               (c) =>
                   _keysEqual(c.publicKey, publicKey)
                       ? c.withCustomName(customName)
+                      : c,
+            )
+            .toList();
+    state = next;
+    StorageService.instance.saveContacts(next);
+  }
+
+  /// Optimistically flips the favourite bit on the cached contact and saves
+  /// storage. Callers are expected to push the updated contact to the radio
+  /// via [RadioService.addUpdateContact] so the change persists across
+  /// disconnects and reaches other apps connected to the same radio.
+  void setFavorite(Uint8List publicKey, bool value) {
+    final next =
+        state
+            .map(
+              (c) =>
+                  _keysEqual(c.publicKey, publicKey)
+                      ? c.withFavorite(value)
                       : c,
             )
             .toList();
@@ -1553,33 +1577,35 @@ final repeaterStatusProvider = StateProvider<Map<String, RepeaterStats>>(
 final loginResultProvider = StateProvider<bool?>((_) => null);
 
 // ---------------------------------------------------------------------------
-// Contact favorites (app-side, not stored on radio)
+// Contact favorites — derived from the radio's `flags` byte (bit 0).
+// The firmware owns the canonical list; the UI reads Contact.isFavorite
+// directly. ContactsNotifier.setFavorite mutates the bit locally and the
+// caller pushes the updated contact via RadioService.addUpdateContact.
 // ---------------------------------------------------------------------------
 
-class FavoritesNotifier extends StateNotifier<Set<String>> {
-  FavoritesNotifier() : super({});
-
-  Future<void> loadFromStorage() async {
-    state = await StorageService.instance.loadFavorites();
+/// Migrates any app-local favourites (from pre-fix SharedPreferences) to the
+/// radio's `flags` byte. Called once after the initial contact sync on every
+/// connect — it's idempotent: after the first migration, the stored set is
+/// cleared and subsequent calls are no-ops.
+Future<void> _migrateLegacyFavorites(Ref ref, RadioService service) async {
+  final legacy = await StorageService.instance.loadFavorites();
+  if (legacy.isEmpty) return;
+  final contactsNotifier = ref.read(contactsProvider.notifier);
+  for (final contact in ref.read(contactsProvider)) {
+    final keyHex = contact.publicKey
+        .map((b) => b.toRadixString(16).padLeft(2, '0'))
+        .join();
+    if (!legacy.contains(keyHex) || contact.isFavorite) continue;
+    contactsNotifier.setFavorite(contact.publicKey, true);
+    // Fire-and-forget — OkResponse isn't awaited; failures fall through to
+    // the next connect's migration retry (the legacy set is still present
+    // until clearFavorites below runs on success).
+    unawaited(
+      service.addUpdateContact(contact.withFavorite(true)).catchError((_) {}),
+    );
   }
-
-  void toggle(String keyHex) {
-    final next = Set<String>.from(state);
-    if (next.contains(keyHex)) {
-      next.remove(keyHex);
-    } else {
-      next.add(keyHex);
-    }
-    state = next;
-    StorageService.instance.saveFavorites(next);
-  }
-
-  bool isFavorite(String keyHex) => state.contains(keyHex);
+  await StorageService.instance.clearFavorites();
 }
-
-final favoritesProvider = StateNotifierProvider<FavoritesNotifier, Set<String>>(
-  (ref) => FavoritesNotifier(),
-);
 
 // ---------------------------------------------------------------------------
 // Advert auto-add settings (app-side, per contact type)
@@ -1762,6 +1788,76 @@ final packetHeardProvider =
     StateNotifierProvider<PacketHeardNotifier, Map<String, List<MessagePath>>>(
       (ref) => PacketHeardNotifier(),
     );
+
+// ---------------------------------------------------------------------------
+// RX log (raw 0x88 frames for diagnostics / PCAP export)
+// ---------------------------------------------------------------------------
+
+class RxLogEntry {
+  const RxLogEntry({
+    required this.receivedAt,
+    required this.snr,
+    required this.rssi,
+    required this.rawPacket,
+    this.payloadType,
+    this.packetHashHex,
+    this.pathHops,
+  });
+
+  final DateTime receivedAt;
+  final double snr;
+  final int rssi;
+
+  /// Raw over-the-air packet bytes (without the 0x88 SNR/RSSI preamble).
+  final Uint8List rawPacket;
+
+  final int? payloadType;
+  final String? packetHashHex;
+  final int? pathHops;
+}
+
+class RxLogNotifier extends StateNotifier<List<RxLogEntry>> {
+  RxLogNotifier() : super(const []);
+
+  static const int _maxEntries = 4000;
+
+  /// Record one PUSH_CODE_LOG_RX_DATA frame payload (bytes after 0x88).
+  void recordFromLogRxFrame(Uint8List data) {
+    if (data.length < 2) return;
+
+    final snrByte = data[0];
+    final snr = (snrByte < 128 ? snrByte : snrByte - 256) / 4.0;
+    final rssiByte = data[1];
+    final rssi = rssiByte < 128 ? rssiByte : rssiByte - 256;
+    final raw =
+        data.length > 2 ? Uint8List.fromList(data.sublist(2)) : Uint8List(0);
+
+    final parsed = parseRawPacket(raw);
+
+    final entry = RxLogEntry(
+      receivedAt: DateTime.now(),
+      snr: snr,
+      rssi: rssi,
+      rawPacket: raw,
+      payloadType: parsed?.payloadType,
+      packetHashHex: parsed?.packetHashHex,
+      pathHops: parsed?.pathHashCount,
+    );
+
+    final next = [...state, entry];
+    if (next.length > _maxEntries) {
+      state = next.sublist(next.length - _maxEntries);
+    } else {
+      state = next;
+    }
+  }
+
+  void clear() => state = const [];
+}
+
+final rxLogProvider = StateNotifierProvider<RxLogNotifier, List<RxLogEntry>>(
+  (ref) => RxLogNotifier(),
+);
 
 // ---------------------------------------------------------------------------
 // Contacts screen persistent UI state (survives app restarts)

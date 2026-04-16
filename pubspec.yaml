@@ -1,7 +1,7 @@
-name: mcapppt
-description: "LusoAPP - MeshCore Companion App - Comunidade Portuguesa"
+name: lusoapp
+description: "MeshCore Companion App - MeshCore Portugal"
 publish_to: "none"
-version: 0.4.0+2
+version: 0.4.1+8
 
 environment:
   sdk: ^3.7.0
@@ -39,6 +39,7 @@ dependencies:
   # QR code
   qr_flutter: ^4.1.0
   mobile_scanner: ^6.0.0
+  image_picker: ^1.1.0
 
   # Cryptography (SHA-256 for hashtag channel key derivation)
   crypto: ^3.0.3
@@ -92,6 +93,7 @@ dependency_overrides:
 
 flutter:
   uses-material-design: true
+  generate: true
 
   assets:
     - assets/images/

@@ -1,4 +1,4 @@
-# MCAPPPT — MeshCore Companion App build & run scripts
+# lusoapp — MeshCore Companion App build & run scripts
 # Usage: .\scripts\run.ps1 [command]
 #
 # Commands:
@@ -24,9 +24,9 @@ $ErrorActionPreference = "Stop"
 $ProjectDir = Split-Path -Parent (Split-Path -Parent $MyInvocation.MyCommand.Path)
 Push-Location $ProjectDir
 
-function Log($msg)  { Write-Host "[MCAPPPT] $msg" -ForegroundColor Green }
-function Warn($msg) { Write-Host "[MCAPPPT] $msg" -ForegroundColor Yellow }
-function Err($msg)  { Write-Host "[MCAPPPT] $msg" -ForegroundColor Red }
+function Log($msg)  { Write-Host "[lusoapp] $msg" -ForegroundColor Green }
+function Warn($msg) { Write-Host "[lusoapp] $msg" -ForegroundColor Yellow }
+function Err($msg)  { Write-Host "[lusoapp] $msg" -ForegroundColor Red }
 
 function Test-Flutter {
     $flutterCmd = Get-Command flutter -ErrorAction SilentlyContinue
@@ -66,6 +66,12 @@ function Invoke-Get {
 function Invoke-Gen {
     Log "Running code generation..."
     flutter pub run build_runner build --delete-conflicting-outputs
+}
+
+function Invoke-L10n {
+    Log "Generating localizations (flutter gen-l10n)..."
+    flutter gen-l10n
+    Log "Localization files updated in lib/l10n/"
 }
 
 function Invoke-Test {
@@ -134,7 +140,7 @@ function Invoke-Setup {
     # Generate platform folders if missing
     if (-not (Test-Path "android") -or -not (Test-Path "windows")) {
         Log "Generating platform folders..."
-        flutter create --org pt.meshcore --project-name mcapppt --platforms android,ios,windows,linux .
+        flutter create --org pt.meshcore --project-name lusoapp --platforms android,ios,windows,linux .
     }
 
     Invoke-Get
@@ -148,7 +154,7 @@ function Invoke-Devices {
 
 function Show-Help {
     Write-Host ""
-    Write-Host "MCAPPPT - MeshCore Companion App (Portugal)" -ForegroundColor Cyan
+    Write-Host "lusoapp - MeshCore Companion App (Portugal)" -ForegroundColor Cyan
     Write-Host ""
     Write-Host "Usage: .\scripts\run.ps1 <command>" -ForegroundColor White
     Write-Host ""
@@ -172,6 +178,7 @@ function Show-Help {
     Write-Host "  clean          Clean build artifacts"
     Write-Host "  get            Get/update dependencies"
     Write-Host "  gen            Run code generation (build_runner)"
+  Write-Host "  l10n           Regenerate localization Dart files from ARB (flutter gen-l10n)"
     Write-Host "  devices        List connected devices"
     Write-Host "  doctor         Check Flutter environment"
     Write-Host ""
@@ -208,6 +215,7 @@ try {
         "clean"            { Invoke-Clean }
         "get"              { Invoke-Get }
         "gen"              { Invoke-Gen }
+        "l10n"             { Invoke-L10n }
         "analyze"          { Invoke-Analyze }
         "doctor"           { Invoke-Doctor }
         "setup"            { Invoke-Setup }

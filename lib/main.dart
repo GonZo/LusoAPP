@@ -9,6 +9,7 @@ import 'services/notification_service.dart';
 import 'services/plan333_service.dart';
 import 'services/storage_service.dart';
 import 'services/widget_service.dart';
+import 'l10n/l10n.dart';
 import 'ui/router.dart';
 import 'ui/theme.dart';
 
@@ -70,7 +71,6 @@ class _McAppPtState extends ConsumerState<McAppPt> {
     await NotificationService.instance.init();
     if (mounted) {
       await ref.read(notificationSettingsProvider.notifier).loadFromStorage();
-      await ref.read(favoritesProvider.notifier).loadFromStorage();
       await ref.read(plan333EnabledProvider.notifier).loadFromStorage();
       await ref.read(plan333ConfigProvider.notifier).loadFromStorage();
       await ref.read(qslLogProvider.notifier).loadFromStorage();
@@ -104,6 +104,8 @@ class _McAppPtState extends ConsumerState<McAppPt> {
       theme: AppTheme.light,
       darkTheme: AppTheme.dark,
       themeMode: ThemeMode.dark,
+      localizationsDelegates: AppLocalizations.localizationsDelegates,
+      supportedLocales: AppLocalizations.supportedLocales,
       routerConfig: router,
     );
   }

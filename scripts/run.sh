@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# MCAPPPT — MeshCore Companion App build & run scripts
+# lusoapp — MeshCore Companion App build & run scripts
 # Usage: ./scripts/run.sh [command]
 #
 # Commands:
@@ -26,9 +26,9 @@ YELLOW='\033[1;33m'
 CYAN='\033[0;36m'
 NC='\033[0m'
 
-log()  { echo -e "${GREEN}[MCAPPPT]${NC} $*"; }
-warn() { echo -e "${YELLOW}[MCAPPPT]${NC} $*"; }
-err()  { echo -e "${RED}[MCAPPPT]${NC} $*" >&2; }
+log()  { echo -e "${GREEN}[lusoapp]${NC} $*"; }
+warn() { echo -e "${YELLOW}[lusoapp]${NC} $*"; }
+err()  { echo -e "${RED}[lusoapp]${NC} $*" >&2; }
 
 check_flutter() {
     if ! command -v flutter &>/dev/null; then
@@ -46,6 +46,12 @@ cmd_get() {
 cmd_gen() {
     log "Running code generation..."
     flutter pub run build_runner build --delete-conflicting-outputs
+}
+
+cmd_l10n() {
+    log "Generating localizations (flutter gen-l10n)..."
+    flutter gen-l10n
+    log "Localization files updated in lib/l10n/"
 }
 
 cmd_test() {
@@ -146,7 +152,7 @@ cmd_setup() {
     # Generate platform folders if missing
     if [ ! -d "android" ] || [ ! -d "ios" ]; then
         log "Generating platform folders..."
-        flutter create --org pt.meshcore --project-name mcapppt --platforms android,ios,linux,windows .
+        flutter create --org pt.meshcore --project-name lusoapp --platforms android,ios,linux,windows .
     fi
     cmd_get
     log "Setup complete. Run: ./scripts/run.sh run"
@@ -173,11 +179,12 @@ case "$COMMAND" in
     clean)      cmd_clean ;;
     get)        cmd_get ;;
     gen)        cmd_gen ;;
+    l10n)       cmd_l10n ;;
     analyze)    cmd_analyze ;;
     doctor)     cmd_doctor ;;
     setup)      cmd_setup ;;
     *)
-        echo "MCAPPPT — MeshCore Companion App (Portugal)"
+        echo "lusoapp — MeshCore Companion App (Portugal)"
         echo ""
         echo "Usage: $0 <command>"
         echo ""
@@ -199,6 +206,7 @@ case "$COMMAND" in
         echo "  clean        Clean build artifacts"
         echo "  get          Get/update dependencies"
         echo "  gen          Run code generation (build_runner)"
+  echo "  l10n         Regenerate localization Dart files from ARB (flutter gen-l10n)"
         echo "  doctor       Check Flutter environment"
         exit 1
         ;;
