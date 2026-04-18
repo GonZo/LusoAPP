@@ -55,6 +55,9 @@ class ConnectionNotifier extends StateNotifier<TransportState> {
   StreamSubscription<CompanionResponse>? _responseSub;
   Timer? _batteryPollTimer;
 
+  /// Set to true in [disconnect] to abort any in-progress reconnect loop.
+  bool _reconnectCancelled = false;
+
   void _setStep(int step, String label) {
     _ref.read(connectionProgressProvider.notifier).state = step;
     _ref.read(connectionStepProvider.notifier).state = label;
@@ -151,6 +154,7 @@ class ConnectionNotifier extends StateNotifier<TransportState> {
   }
 
   Future<void> disconnect() async {
+    _reconnectCancelled = true;
     _batteryPollTimer?.cancel();
     _batteryPollTimer = null;
     await _connectionLostSub?.cancel();
@@ -215,7 +219,12 @@ class ConnectionNotifier extends StateNotifier<TransportState> {
     });
   }
 
-  /// Subscribe to unexpected connection loss and attempt one auto-reconnect.
+  /// Subscribe to unexpected connection loss and attempt auto-reconnect with
+  /// exponential back-off (2 s → 4 s → 8 s → 16 s → 30 s, then 30 s forever)
+  /// until the connection is restored or the user calls [disconnect].
+  ///
+  /// When the [autoReconnectProvider] setting is off the connection simply
+  /// transitions to [TransportState.disconnected] with no retry attempt.
   void _setupAutoReconnect(
     RadioService service,
     Future<bool> Function() reconnector,
@@ -223,14 +232,55 @@ class ConnectionNotifier extends StateNotifier<TransportState> {
     _connectionLostSub?.cancel();
     _connectionLostSub = service.connectionLost.listen((_) async {
       if (state != TransportState.connected) return;
+
+      _batteryPollTimer?.cancel();
+      _batteryPollTimer = null;
       _ref.read(radioServiceProvider.notifier).state = null;
-      _setStep(0, 'Conexão perdida. A reconectar...');
-      state = TransportState.connecting;
-      await Future.delayed(const Duration(seconds: 2));
-      final ok = await reconnector();
-      if (!ok) {
+      _reconnectCancelled = false;
+
+      // If the user has disabled auto-reconnect, just go to disconnected.
+      if (!_ref.read(autoReconnectProvider)) {
+        state = TransportState.disconnected;
+        _setStep(0, '');
+        _pushWidget();
+        return;
+      }
+
+      const backoffSeconds = [2, 4, 8, 16, 30];
+      var attempt = 0;
+
+      while (!_reconnectCancelled) {
+        final delaySec =
+            attempt < backoffSeconds.length
+                ? backoffSeconds[attempt]
+                : backoffSeconds.last;
+        _setStep(
+          0,
+          'Ligação perdida. A reconectar em ${delaySec}s... (tentativa ${attempt + 1})',
+        );
+        state = TransportState.connecting;
+        _pushWidget();
+
+        await Future.delayed(Duration(seconds: delaySec));
+        if (_reconnectCancelled) break;
+
+        // User may have toggled the setting off while we were waiting.
+        if (!_ref.read(autoReconnectProvider)) break;
+
+        attempt++;
+        _setStep(0, 'A reconectar... (tentativa $attempt)');
+
+        final ok = await reconnector();
+        // reconnector sets state = connected and installs a fresh listener.
+        if (ok) return;
+        if (_reconnectCancelled) break;
+      }
+
+      // Reconnect loop ended without success.
+      if (!_reconnectCancelled) {
         state = TransportState.error;
         _setStep(0, 'Reconexão falhou.');
+        _pushWidget();
       }
     });
   }
@@ -358,42 +408,52 @@ class ConnectionNotifier extends StateNotifier<TransportState> {
           }
           if (!finalMessage.isOutgoing) {
             _ref.read(networkStatsProvider.notifier).incrementRx();
+            final isMuted =
+                message.channelIndex != null &&
+                _ref
+                    .read(mutedChannelsProvider)
+                    .contains(message.channelIndex!);
             if (message.channelIndex != null) {
               _ref
                   .read(unreadCountsProvider.notifier)
                   .incrementChannel(message.channelIndex!);
             }
-            final channels = _ref.read(channelsProvider);
-            final idx = message.channelIndex ?? 0;
-            final channel = channels.where((c) => c.index == idx).firstOrNull;
-            final channelName =
-                (channel != null && channel.name.isNotEmpty)
-                    ? channel.name
-                    : 'Canal $idx';
-            // Channel messages embed sender as "Name: body" when senderName
-            // is not set separately.  Parse both parts so the notification
-            // shows "Name: body" rather than "Desconhecido: Name: body".
-            final String notifSender;
-            final String notifBody;
-            if (message.senderName != null && message.senderName!.isNotEmpty) {
-              notifSender = message.senderName!;
-              notifBody = message.text;
-            } else {
-              final colonIdx = message.text.indexOf(': ');
-              if (colonIdx > 0) {
-                notifSender = message.text.substring(0, colonIdx).trim();
-                notifBody = message.text.substring(colonIdx + 2);
-              } else {
-                notifSender = 'Desconhecido';
+            // Notifications (OS alert + app-icon badge) are suppressed for
+            // muted channels; the in-app unread badge is still shown above.
+            if (!isMuted) {
+              final channels = _ref.read(channelsProvider);
+              final idx = message.channelIndex ?? 0;
+              final channel = channels.where((c) => c.index == idx).firstOrNull;
+              final channelName =
+                  (channel != null && channel.name.isNotEmpty)
+                      ? channel.name
+                      : 'Canal $idx';
+              // Channel messages embed sender as "Name: body" when senderName
+              // is not set separately.  Parse both parts so the notification
+              // shows "Name: body" rather than "Desconhecido: Name: body".
+              final String notifSender;
+              final String notifBody;
+              if (message.senderName != null &&
+                  message.senderName!.isNotEmpty) {
+                notifSender = message.senderName!;
                 notifBody = message.text;
+              } else {
+                final colonIdx = message.text.indexOf(': ');
+                if (colonIdx > 0) {
+                  notifSender = message.text.substring(0, colonIdx).trim();
+                  notifBody = message.text.substring(colonIdx + 2);
+                } else {
+                  notifSender = 'Desconhecido';
+                  notifBody = message.text;
+                }
               }
+              NotificationService.instance.showChannelMessage(
+                channelName: channelName,
+                senderName: notifSender,
+                text: notifBody,
+                isAppInForeground: AppLifecycleObserver.isInForeground,
+              );
             }
-            NotificationService.instance.showChannelMessage(
-              channelName: channelName,
-              senderName: notifSender,
-              text: notifBody,
-              isAppInForeground: AppLifecycleObserver.isInForeground,
-            );
           }
         case SelfInfoResponse(:final info):
           _ref.read(selfInfoProvider.notifier).state = info;
@@ -962,6 +1022,10 @@ class ContactsNotifier extends StateNotifier<List<Contact>> {
         customName: existing.customName,
       );
     } else {
+      // Don't create a nameless contact — an advert without a name is a
+      // path-update ping for a node we haven't met yet; ignore it until
+      // a proper advert with a name arrives.
+      if (name.isEmpty) return;
       next = [
         ...state,
         Contact(
@@ -1312,6 +1376,46 @@ final messagesProvider =
 // Unread message counts
 // ---------------------------------------------------------------------------
 
+// ---------------------------------------------------------------------------
+// Muted channels
+// ---------------------------------------------------------------------------
+
+class MutedChannelsNotifier extends StateNotifier<Set<int>> {
+  MutedChannelsNotifier() : super({}) {
+    _load();
+  }
+
+  static const _key = 'muted_channels_v1';
+
+  Future<void> _load() async {
+    final prefs = await SharedPreferences.getInstance();
+    final list = prefs.getStringList(_key) ?? [];
+    state = list.map(int.parse).toSet();
+  }
+
+  Future<void> toggle(int channelIndex) async {
+    final next = Set<int>.from(state);
+    if (next.contains(channelIndex)) {
+      next.remove(channelIndex);
+    } else {
+      next.add(channelIndex);
+    }
+    state = next;
+    await _save();
+  }
+
+  Future<void> _save() async {
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setStringList(_key, state.map((i) => '$i').toList());
+  }
+}
+
+final mutedChannelsProvider =
+    StateNotifierProvider<MutedChannelsNotifier, Set<int>>(
+      (ref) => MutedChannelsNotifier(),
+    );
+
+// ---------------------------------------------------------------------------
 /// Immutable snapshot of unread counts per channel and per contact.
 class UnreadCounts {
   const UnreadCounts({this.channels = const {}, this.contacts = const {}});
@@ -1331,31 +1435,81 @@ class UnreadCounts {
 class UnreadCountsNotifier extends StateNotifier<UnreadCounts> {
   UnreadCountsNotifier() : super(const UnreadCounts());
 
+  static const _chKey = 'unread_channels_v1';
+  static const _coKey = 'unread_contacts_v1';
+
+  Future<void> loadFromStorage() async {
+    final prefs = await SharedPreferences.getInstance();
+    final chRaw = prefs.getString(_chKey);
+    final coRaw = prefs.getString(_coKey);
+    Map<int, int> ch = {};
+    Map<String, int> co = {};
+    if (chRaw != null) {
+      for (final part in chRaw.split(',')) {
+        final kv = part.split(':');
+        if (kv.length == 2) {
+          final k = int.tryParse(kv[0]);
+          final v = int.tryParse(kv[1]);
+          if (k != null && v != null && v > 0) ch[k] = v;
+        }
+      }
+    }
+    if (coRaw != null) {
+      for (final part in coRaw.split(',')) {
+        final kv = part.split(':');
+        if (kv.length == 2 && kv[0].isNotEmpty) {
+          final v = int.tryParse(kv[1]);
+          if (v != null && v > 0) co[kv[0]] = v;
+        }
+      }
+    }
+    state = UnreadCounts(channels: ch, contacts: co);
+  }
+
+  Future<void> _save() async {
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setString(
+      _chKey,
+      state.channels.entries.map((e) => '${e.key}:${e.value}').join(','),
+    );
+    await prefs.setString(
+      _coKey,
+      state.contacts.entries.map((e) => '${e.key}:${e.value}').join(','),
+    );
+  }
+
   void incrementChannel(int index) {
     final ch = Map<int, int>.from(state.channels)
       ..[index] = (state.channels[index] ?? 0) + 1;
     state = UnreadCounts(channels: ch, contacts: state.contacts);
+    _save();
   }
 
   void incrementContact(String hex6) {
     final co = Map<String, int>.from(state.contacts)
       ..[hex6] = (state.contacts[hex6] ?? 0) + 1;
     state = UnreadCounts(channels: state.channels, contacts: co);
+    _save();
   }
 
   void markChannelRead(int index) {
     if ((state.channels[index] ?? 0) == 0) return;
     final ch = Map<int, int>.from(state.channels)..remove(index);
     state = UnreadCounts(channels: ch, contacts: state.contacts);
+    _save();
   }
 
   void markContactRead(String hex6) {
     if ((state.contacts[hex6] ?? 0) == 0) return;
     final co = Map<String, int>.from(state.contacts)..remove(hex6);
     state = UnreadCounts(channels: state.channels, contacts: co);
+    _save();
   }
 
-  void reset() => state = const UnreadCounts();
+  void reset() {
+    state = const UnreadCounts();
+    _save();
+  }
 }
 
 final unreadCountsProvider =
@@ -1386,6 +1540,34 @@ class NotificationSettingsNotifier extends StateNotifier<NotificationSettings> {
 final notificationSettingsProvider =
     StateNotifierProvider<NotificationSettingsNotifier, NotificationSettings>(
       (ref) => NotificationSettingsNotifier(),
+    );
+
+// ---------------------------------------------------------------------------
+// Auto-reconnect setting
+// ---------------------------------------------------------------------------
+
+class AutoReconnectNotifier extends StateNotifier<bool> {
+  AutoReconnectNotifier() : super(true) {
+    _load();
+  }
+
+  static const _key = 'auto_reconnect';
+
+  Future<void> _load() async {
+    final prefs = await SharedPreferences.getInstance();
+    state = prefs.getBool(_key) ?? true;
+  }
+
+  Future<void> set(bool value) async {
+    state = value;
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setBool(_key, value);
+  }
+}
+
+final autoReconnectProvider =
+    StateNotifierProvider<AutoReconnectNotifier, bool>(
+      (ref) => AutoReconnectNotifier(),
     );
 
 /// Returns the first 6 bytes of [key] as a lowercase hex string.
@@ -1592,9 +1774,10 @@ Future<void> _migrateLegacyFavorites(Ref ref, RadioService service) async {
   if (legacy.isEmpty) return;
   final contactsNotifier = ref.read(contactsProvider.notifier);
   for (final contact in ref.read(contactsProvider)) {
-    final keyHex = contact.publicKey
-        .map((b) => b.toRadixString(16).padLeft(2, '0'))
-        .join();
+    final keyHex =
+        contact.publicKey
+            .map((b) => b.toRadixString(16).padLeft(2, '0'))
+            .join();
     if (!legacy.contains(keyHex) || contact.isFavorite) continue;
     contactsNotifier.setFavorite(contact.publicKey, true);
     // Fire-and-forget — OkResponse isn't awaited; failures fall through to
@@ -1614,22 +1797,40 @@ Future<void> _migrateLegacyFavorites(Ref ref, RadioService service) async {
 /// Controls whether incoming adverts are automatically written back to the
 /// radio's contact table (via CMD_ADD_UPDATE_CONTACT) for each node type.
 ///
-/// All types default to true (auto-add). The user can disable per type
-/// in Radio Settings → "Adição automática de contactos".
+/// Auto-add contact settings. Persisted to SharedPreferences.
 class AdvertAutoAddSettings {
   const AdvertAutoAddSettings({
+    this.addAll = true,
     this.addChat = true,
     this.addRepeater = true,
     this.addRoom = true,
     this.addSensor = true,
+    this.overwriteOldest = false,
+    this.maxHops,
+    this.pullToRefresh = true,
+    this.showPublicKeys = true,
   });
 
+  /// When true, auto-add all advert types (ignores per-type flags).
+  final bool addAll;
   final bool addChat; // type 1
   final bool addRepeater; // type 2
   final bool addRoom; // type 3
   final bool addSensor; // type 4
+  /// Overwrite oldest non-favourite contact when the list is full.
+  final bool overwriteOldest;
+
+  /// Maximum hop count for auto-add; null means no limit.
+  final int? maxHops;
+
+  /// Allow pull-to-refresh gesture on the contacts list.
+  final bool pullToRefresh;
+
+  /// Show public key prefix (shortId) in the contacts list tiles.
+  final bool showPublicKeys;
 
   bool allowsType(int type) {
+    if (addAll) return true;
     switch (type) {
       case 1:
         return addChat;
@@ -1644,16 +1845,28 @@ class AdvertAutoAddSettings {
     }
   }
 
+  static const Object _sentinel = Object();
+
   AdvertAutoAddSettings copyWith({
+    bool? addAll,
     bool? addChat,
     bool? addRepeater,
     bool? addRoom,
     bool? addSensor,
+    bool? overwriteOldest,
+    Object? maxHops = _sentinel,
+    bool? pullToRefresh,
+    bool? showPublicKeys,
   }) => AdvertAutoAddSettings(
+    addAll: addAll ?? this.addAll,
     addChat: addChat ?? this.addChat,
     addRepeater: addRepeater ?? this.addRepeater,
     addRoom: addRoom ?? this.addRoom,
     addSensor: addSensor ?? this.addSensor,
+    overwriteOldest: overwriteOldest ?? this.overwriteOldest,
+    maxHops: identical(maxHops, _sentinel) ? this.maxHops : maxHops as int?,
+    pullToRefresh: pullToRefresh ?? this.pullToRefresh,
+    showPublicKeys: showPublicKeys ?? this.showPublicKeys,
   );
 }
 
@@ -1666,22 +1879,43 @@ class AdvertAutoAddNotifier extends StateNotifier<AdvertAutoAddSettings> {
 
   Future<void> _load() async {
     final prefs = await SharedPreferences.getInstance();
+    final maxHopsRaw = prefs.getInt('${_key}_maxHops');
     state = AdvertAutoAddSettings(
+      addAll: prefs.getBool('${_key}_addAll') ?? true,
       addChat: prefs.getBool('${_key}_chat') ?? true,
       addRepeater: prefs.getBool('${_key}_repeater') ?? true,
       addRoom: prefs.getBool('${_key}_room') ?? true,
       addSensor: prefs.getBool('${_key}_sensor') ?? true,
+      overwriteOldest: prefs.getBool('${_key}_overwriteOldest') ?? false,
+      maxHops: maxHopsRaw,
+      pullToRefresh: prefs.getBool('${_key}_pullToRefresh') ?? true,
+      showPublicKeys: prefs.getBool('${_key}_showPublicKeys') ?? true,
     );
   }
 
   Future<void> _save() async {
     final prefs = await SharedPreferences.getInstance();
-    await Future.wait([
+    final futures = <Future<void>>[
+      prefs.setBool('${_key}_addAll', state.addAll),
       prefs.setBool('${_key}_chat', state.addChat),
       prefs.setBool('${_key}_repeater', state.addRepeater),
       prefs.setBool('${_key}_room', state.addRoom),
       prefs.setBool('${_key}_sensor', state.addSensor),
-    ]);
+      prefs.setBool('${_key}_overwriteOldest', state.overwriteOldest),
+      prefs.setBool('${_key}_pullToRefresh', state.pullToRefresh),
+      prefs.setBool('${_key}_showPublicKeys', state.showPublicKeys),
+    ];
+    if (state.maxHops != null) {
+      futures.add(prefs.setInt('${_key}_maxHops', state.maxHops!));
+    } else {
+      futures.add(prefs.remove('${_key}_maxHops'));
+    }
+    await Future.wait(futures);
+  }
+
+  void setAddAll(bool v) {
+    state = state.copyWith(addAll: v);
+    _save();
   }
 
   void setChat(bool v) {
@@ -1701,6 +1935,26 @@ class AdvertAutoAddNotifier extends StateNotifier<AdvertAutoAddSettings> {
 
   void setSensor(bool v) {
     state = state.copyWith(addSensor: v);
+    _save();
+  }
+
+  void setOverwriteOldest(bool v) {
+    state = state.copyWith(overwriteOldest: v);
+    _save();
+  }
+
+  void setMaxHops(int? v) {
+    state = state.copyWith(maxHops: v);
+    _save();
+  }
+
+  void setPullToRefresh(bool v) {
+    state = state.copyWith(pullToRefresh: v);
+    _save();
+  }
+
+  void setShowPublicKeys(bool v) {
+    state = state.copyWith(showPublicKeys: v);
     _save();
   }
 }

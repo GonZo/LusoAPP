@@ -652,6 +652,18 @@ abstract class AppLocalizations {
   /// **'Desligado'**
   String get settingsDisconnected;
 
+  /// No description provided for @settingsAutoReconnect.
+  ///
+  /// In pt, this message translates to:
+  /// **'Reconexão automática'**
+  String get settingsAutoReconnect;
+
+  /// No description provided for @settingsAutoReconnectDesc.
+  ///
+  /// In pt, this message translates to:
+  /// **'Reconecta automaticamente quando a ligação é perdida'**
+  String get settingsAutoReconnectDesc;
+
   /// No description provided for @settingsRadioConfig.
   ///
   /// In pt, this message translates to:
@@ -1756,6 +1768,48 @@ abstract class AppLocalizations {
   /// **'Esta acção não pode ser desfeita.'**
   String get channelsRemoveWarning;
 
+  /// No description provided for @channelsMuteTitle.
+  ///
+  /// In pt, this message translates to:
+  /// **'Canal silenciado'**
+  String get channelsMuteTitle;
+
+  /// No description provided for @channelsUnmuteTitle.
+  ///
+  /// In pt, this message translates to:
+  /// **'Notificações activas'**
+  String get channelsUnmuteTitle;
+
+  /// No description provided for @channelsMuteSubtitleOn.
+  ///
+  /// In pt, this message translates to:
+  /// **'Sem alertas — badge de não lidas ainda visível'**
+  String get channelsMuteSubtitleOn;
+
+  /// No description provided for @channelsMuteSubtitleOff.
+  ///
+  /// In pt, this message translates to:
+  /// **'Recebe notificações e badge de não lidas'**
+  String get channelsMuteSubtitleOff;
+
+  /// No description provided for @channelsMuteLabel.
+  ///
+  /// In pt, this message translates to:
+  /// **'silenciado'**
+  String get channelsMuteLabel;
+
+  /// No description provided for @chatMuteChannel.
+  ///
+  /// In pt, this message translates to:
+  /// **'Silenciar canal'**
+  String get chatMuteChannel;
+
+  /// No description provided for @chatUnmuteChannel.
+  ///
+  /// In pt, this message translates to:
+  /// **'Reativar notificações'**
+  String get chatUnmuteChannel;
+
   /// No description provided for @chatNoMessages.
   ///
   /// In pt, this message translates to:
@@ -1935,6 +1989,12 @@ abstract class AppLocalizations {
   /// In pt, this message translates to:
   /// **'Opções do canal'**
   String get chatMenuOptions;
+
+  /// No description provided for @chatNewMessages.
+  ///
+  /// In pt, this message translates to:
+  /// **'Novas mensagens'**
+  String get chatNewMessages;
 
   /// No description provided for @connectTitle.
   ///
@@ -2175,6 +2235,60 @@ abstract class AppLocalizations {
   /// In pt, this message translates to:
   /// **'Ouvido'**
   String get discoverHeard;
+
+  /// No description provided for @discoverNever.
+  ///
+  /// In pt, this message translates to:
+  /// **'Nunca'**
+  String get discoverNever;
+
+  /// No description provided for @discoverNoName.
+  ///
+  /// In pt, this message translates to:
+  /// **'Sem nome'**
+  String get discoverNoName;
+
+  /// No description provided for @discoverTypeCompanion.
+  ///
+  /// In pt, this message translates to:
+  /// **'Companheiro'**
+  String get discoverTypeCompanion;
+
+  /// No description provided for @discoverTypeUnknown.
+  ///
+  /// In pt, this message translates to:
+  /// **'Desconhecido'**
+  String get discoverTypeUnknown;
+
+  /// No description provided for @discoverPathNear.
+  ///
+  /// In pt, this message translates to:
+  /// **'Próximo'**
+  String get discoverPathNear;
+
+  /// No description provided for @discoverJustNow.
+  ///
+  /// In pt, this message translates to:
+  /// **'Agora'**
+  String get discoverJustNow;
+
+  /// No description provided for @discoverMinutesAgo.
+  ///
+  /// In pt, this message translates to:
+  /// **'{min}m atrás'**
+  String discoverMinutesAgo(int min);
+
+  /// No description provided for @discoverHoursAgo.
+  ///
+  /// In pt, this message translates to:
+  /// **'{hours}h atrás'**
+  String discoverHoursAgo(int hours);
+
+  /// No description provided for @discoverDaysAgo.
+  ///
+  /// In pt, this message translates to:
+  /// **'{days}d atrás'**
+  String discoverDaysAgo(int days);
 
   /// No description provided for @appsPlano333Title.
   ///
@@ -2617,7 +2731,7 @@ abstract class AppLocalizations {
   /// No description provided for @radioSettingsAutoAddTitle.
   ///
   /// In pt, this message translates to:
-  /// **'Adição automática de contactos'**
+  /// **'Definições de Contactos'**
   String get radioSettingsAutoAddTitle;
 
   /// No description provided for @radioSettingsAutoAddDesc.
@@ -2625,6 +2739,30 @@ abstract class AppLocalizations {
   /// In pt, this message translates to:
   /// **'Quando um nó envia um advert e o rádio está em modo manual, adicionar automaticamente como:'**
   String get radioSettingsAutoAddDesc;
+
+  /// No description provided for @radioSettingsAutoAddAll.
+  ///
+  /// In pt, this message translates to:
+  /// **'Auto Adicionar Todos'**
+  String get radioSettingsAutoAddAll;
+
+  /// No description provided for @radioSettingsAutoAddAllDesc.
+  ///
+  /// In pt, this message translates to:
+  /// **'Quando ativo, todos os adverts recebidos serão adicionados aos contactos.'**
+  String get radioSettingsAutoAddAllDesc;
+
+  /// No description provided for @radioSettingsAutoAddSelected.
+  ///
+  /// In pt, this message translates to:
+  /// **'Auto Adicionar Selecionados'**
+  String get radioSettingsAutoAddSelected;
+
+  /// No description provided for @radioSettingsAutoAddSelectedDesc.
+  ///
+  /// In pt, this message translates to:
+  /// **'Quando ativo, apenas os tipos de contactos selecionados abaixo serão auto adicionados.'**
+  String get radioSettingsAutoAddSelectedDesc;
 
   /// No description provided for @radioSettingsAutoAddCompanion.
   ///
@@ -2649,6 +2787,60 @@ abstract class AppLocalizations {
   /// In pt, this message translates to:
   /// **'Sensor'**
   String get radioSettingsAutoAddSensor;
+
+  /// No description provided for @radioSettingsOverwriteOldest.
+  ///
+  /// In pt, this message translates to:
+  /// **'Sobrescrever Mais Antigo'**
+  String get radioSettingsOverwriteOldest;
+
+  /// No description provided for @radioSettingsOverwriteOldestDesc.
+  ///
+  /// In pt, this message translates to:
+  /// **'Quando ativo, os contactos mais antigos sem favorito são substituídos por novos quando a lista está cheia.'**
+  String get radioSettingsOverwriteOldestDesc;
+
+  /// No description provided for @radioSettingsAutoAddMaxHops.
+  ///
+  /// In pt, this message translates to:
+  /// **'Saltos Máximos de Auto Adição'**
+  String get radioSettingsAutoAddMaxHops;
+
+  /// No description provided for @radioSettingsAutoAddMaxHopsDesc.
+  ///
+  /// In pt, this message translates to:
+  /// **'Os contactos só serão auto adicionados se o caminho do advert tiver o mesmo ou menos saltos que o limite. Deixe em branco para sem limite.'**
+  String get radioSettingsAutoAddMaxHopsDesc;
+
+  /// No description provided for @radioSettingsAutoAddMaxHopsHint.
+  ///
+  /// In pt, this message translates to:
+  /// **'Saltos (0-63)'**
+  String get radioSettingsAutoAddMaxHopsHint;
+
+  /// No description provided for @radioSettingsPullToRefresh.
+  ///
+  /// In pt, this message translates to:
+  /// **'Puxar para Atualizar'**
+  String get radioSettingsPullToRefresh;
+
+  /// No description provided for @radioSettingsPullToRefreshDesc.
+  ///
+  /// In pt, this message translates to:
+  /// **'Quando ativo, pode deslizar para baixo para atualizar a lista de contactos.'**
+  String get radioSettingsPullToRefreshDesc;
+
+  /// No description provided for @radioSettingsShowPublicKeys.
+  ///
+  /// In pt, this message translates to:
+  /// **'Mostrar Chaves Públicas'**
+  String get radioSettingsShowPublicKeys;
+
+  /// No description provided for @radioSettingsShowPublicKeysDesc.
+  ///
+  /// In pt, this message translates to:
+  /// **'Quando ativo, as chaves públicas serão mostradas na lista de contactos.'**
+  String get radioSettingsShowPublicKeysDesc;
 
   /// No description provided for @roomJoinTitle.
   ///

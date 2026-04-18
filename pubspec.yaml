@@ -1,7 +1,7 @@
 name: lusoapp
 description: "MeshCore Companion App - MeshCore Portugal"
 publish_to: "none"
-version: 0.4.1+8
+version: 0.4.1+12
 
 environment:
   sdk: ^3.7.0
@@ -17,8 +17,9 @@ dependencies:
   flutter_blue_plus: ^1.35.0
   permission_handler: ^11.3.1
 
-  # Serial / USB — flutter_libserialport for Windows/Linux/macOS (COM ports)
-  # usb_serial kept for Android USB OTG (Phase 2)
+  # Serial / USB — flutter_libserialport for Windows/Linux COM ports
+  #   .so files are excluded from the Android APK via build.gradle.kts (not 16 KB page-aligned)
+  #   Runtime guards in serial_transport_native.dart prevent any usage on Android
   flutter_libserialport: ^0.6.0
 
   # State management

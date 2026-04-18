@@ -286,6 +286,13 @@ class AppLocalizationsEn extends AppLocalizations {
   String get settingsDisconnected => 'Disconnected';
 
   @override
+  String get settingsAutoReconnect => 'Auto-reconnect';
+
+  @override
+  String get settingsAutoReconnectDesc =>
+      'Automatically reconnect when the connection is lost';
+
+  @override
   String get settingsRadioConfig => 'Radio Configuration';
 
   @override
@@ -859,6 +866,28 @@ class AppLocalizationsEn extends AppLocalizations {
   String get channelsRemoveWarning => 'This action cannot be undone.';
 
   @override
+  String get channelsMuteTitle => 'Channel muted';
+
+  @override
+  String get channelsUnmuteTitle => 'Notifications active';
+
+  @override
+  String get channelsMuteSubtitleOn => 'No alerts — unread badge still shown';
+
+  @override
+  String get channelsMuteSubtitleOff =>
+      'Receives notifications and unread badge';
+
+  @override
+  String get channelsMuteLabel => 'muted';
+
+  @override
+  String get chatMuteChannel => 'Mute channel';
+
+  @override
+  String get chatUnmuteChannel => 'Unmute channel';
+
+  @override
   String get chatNoMessages => 'No messages in this channel';
 
   @override
@@ -950,6 +979,9 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get chatMenuOptions => 'Channel options';
+
+  @override
+  String get chatNewMessages => 'New messages';
 
   @override
   String get connectTitle => 'MeshCore Portugal';
@@ -1076,6 +1108,39 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get discoverHeard => 'Heard';
+
+  @override
+  String get discoverNever => 'Never';
+
+  @override
+  String get discoverNoName => 'No name';
+
+  @override
+  String get discoverTypeCompanion => 'Companion';
+
+  @override
+  String get discoverTypeUnknown => 'Unknown';
+
+  @override
+  String get discoverPathNear => 'Nearby';
+
+  @override
+  String get discoverJustNow => 'Just now';
+
+  @override
+  String discoverMinutesAgo(int min) {
+    return '${min}m ago';
+  }
+
+  @override
+  String discoverHoursAgo(int hours) {
+    return '${hours}h ago';
+  }
+
+  @override
+  String discoverDaysAgo(int days) {
+    return '${days}d ago';
+  }
 
   @override
   String get appsPlano333Title => 'Plan 3-3-3';
@@ -1305,11 +1370,25 @@ class AppLocalizationsEn extends AppLocalizations {
   String get radioSettingsResetValues => 'Reset to current values';
 
   @override
-  String get radioSettingsAutoAddTitle => 'Automatic contact addition';
+  String get radioSettingsAutoAddTitle => 'Contact Settings';
 
   @override
   String get radioSettingsAutoAddDesc =>
       'When a node sends an advert and the radio is in manual mode, automatically add as:';
+
+  @override
+  String get radioSettingsAutoAddAll => 'Auto Add All';
+
+  @override
+  String get radioSettingsAutoAddAllDesc =>
+      'When enabled, all received adverts will be added to contacts.';
+
+  @override
+  String get radioSettingsAutoAddSelected => 'Auto Add Selected';
+
+  @override
+  String get radioSettingsAutoAddSelectedDesc =>
+      'When enabled, only contact types selected below will be auto added to contacts.';
 
   @override
   String get radioSettingsAutoAddCompanion => 'Companion (Chat)';
@@ -1322,6 +1401,37 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get radioSettingsAutoAddSensor => 'Sensor';
+
+  @override
+  String get radioSettingsOverwriteOldest => 'Overwrite Oldest';
+
+  @override
+  String get radioSettingsOverwriteOldestDesc =>
+      'When enabled, oldest non-favourite contacts are overwritten with new contacts when contacts list is full.';
+
+  @override
+  String get radioSettingsAutoAddMaxHops => 'Auto Add Max Hops';
+
+  @override
+  String get radioSettingsAutoAddMaxHopsDesc =>
+      'Contacts will only be auto added if their advert path has the same or less hops as the configured limit. Leave this field blank for no limit.';
+
+  @override
+  String get radioSettingsAutoAddMaxHopsHint => 'Max Hops (0-63)';
+
+  @override
+  String get radioSettingsPullToRefresh => 'Pull To Refresh';
+
+  @override
+  String get radioSettingsPullToRefreshDesc =>
+      'When enabled, you can swipe down to refresh the contacts list.';
+
+  @override
+  String get radioSettingsShowPublicKeys => 'Show Public Keys';
+
+  @override
+  String get radioSettingsShowPublicKeysDesc =>
+      'When enabled, public keys will be shown in contacts list.';
 
   @override
   String get roomJoinTitle => 'Join room';

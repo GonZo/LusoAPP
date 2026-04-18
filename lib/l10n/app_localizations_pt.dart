@@ -287,6 +287,13 @@ class AppLocalizationsPt extends AppLocalizations {
   String get settingsDisconnected => 'Desligado';
 
   @override
+  String get settingsAutoReconnect => 'Reconexão automática';
+
+  @override
+  String get settingsAutoReconnectDesc =>
+      'Reconecta automaticamente quando a ligação é perdida';
+
+  @override
   String get settingsRadioConfig => 'Configuração do Rádio';
 
   @override
@@ -863,6 +870,29 @@ class AppLocalizationsPt extends AppLocalizations {
   String get channelsRemoveWarning => 'Esta acção não pode ser desfeita.';
 
   @override
+  String get channelsMuteTitle => 'Canal silenciado';
+
+  @override
+  String get channelsUnmuteTitle => 'Notificações activas';
+
+  @override
+  String get channelsMuteSubtitleOn =>
+      'Sem alertas — badge de não lidas ainda visível';
+
+  @override
+  String get channelsMuteSubtitleOff =>
+      'Recebe notificações e badge de não lidas';
+
+  @override
+  String get channelsMuteLabel => 'silenciado';
+
+  @override
+  String get chatMuteChannel => 'Silenciar canal';
+
+  @override
+  String get chatUnmuteChannel => 'Reativar notificações';
+
+  @override
   String get chatNoMessages => 'Sem mensagens neste canal';
 
   @override
@@ -954,6 +984,9 @@ class AppLocalizationsPt extends AppLocalizations {
 
   @override
   String get chatMenuOptions => 'Opções do canal';
+
+  @override
+  String get chatNewMessages => 'Novas mensagens';
 
   @override
   String get connectTitle => 'MeshCore Portugal';
@@ -1081,6 +1114,39 @@ class AppLocalizationsPt extends AppLocalizations {
 
   @override
   String get discoverHeard => 'Ouvido';
+
+  @override
+  String get discoverNever => 'Nunca';
+
+  @override
+  String get discoverNoName => 'Sem nome';
+
+  @override
+  String get discoverTypeCompanion => 'Companheiro';
+
+  @override
+  String get discoverTypeUnknown => 'Desconhecido';
+
+  @override
+  String get discoverPathNear => 'Próximo';
+
+  @override
+  String get discoverJustNow => 'Agora';
+
+  @override
+  String discoverMinutesAgo(int min) {
+    return '${min}m atrás';
+  }
+
+  @override
+  String discoverHoursAgo(int hours) {
+    return '${hours}h atrás';
+  }
+
+  @override
+  String discoverDaysAgo(int days) {
+    return '${days}d atrás';
+  }
 
   @override
   String get appsPlano333Title => 'Plano 3-3-3';
@@ -1311,11 +1377,25 @@ class AppLocalizationsPt extends AppLocalizations {
   String get radioSettingsResetValues => 'Repor valores actuais';
 
   @override
-  String get radioSettingsAutoAddTitle => 'Adição automática de contactos';
+  String get radioSettingsAutoAddTitle => 'Definições de Contactos';
 
   @override
   String get radioSettingsAutoAddDesc =>
       'Quando um nó envia um advert e o rádio está em modo manual, adicionar automaticamente como:';
+
+  @override
+  String get radioSettingsAutoAddAll => 'Auto Adicionar Todos';
+
+  @override
+  String get radioSettingsAutoAddAllDesc =>
+      'Quando ativo, todos os adverts recebidos serão adicionados aos contactos.';
+
+  @override
+  String get radioSettingsAutoAddSelected => 'Auto Adicionar Selecionados';
+
+  @override
+  String get radioSettingsAutoAddSelectedDesc =>
+      'Quando ativo, apenas os tipos de contactos selecionados abaixo serão auto adicionados.';
 
   @override
   String get radioSettingsAutoAddCompanion => 'Companheiro (Chat)';
@@ -1328,6 +1408,37 @@ class AppLocalizationsPt extends AppLocalizations {
 
   @override
   String get radioSettingsAutoAddSensor => 'Sensor';
+
+  @override
+  String get radioSettingsOverwriteOldest => 'Sobrescrever Mais Antigo';
+
+  @override
+  String get radioSettingsOverwriteOldestDesc =>
+      'Quando ativo, os contactos mais antigos sem favorito são substituídos por novos quando a lista está cheia.';
+
+  @override
+  String get radioSettingsAutoAddMaxHops => 'Saltos Máximos de Auto Adição';
+
+  @override
+  String get radioSettingsAutoAddMaxHopsDesc =>
+      'Os contactos só serão auto adicionados se o caminho do advert tiver o mesmo ou menos saltos que o limite. Deixe em branco para sem limite.';
+
+  @override
+  String get radioSettingsAutoAddMaxHopsHint => 'Saltos (0-63)';
+
+  @override
+  String get radioSettingsPullToRefresh => 'Puxar para Atualizar';
+
+  @override
+  String get radioSettingsPullToRefreshDesc =>
+      'Quando ativo, pode deslizar para baixo para atualizar a lista de contactos.';
+
+  @override
+  String get radioSettingsShowPublicKeys => 'Mostrar Chaves Públicas';
+
+  @override
+  String get radioSettingsShowPublicKeysDesc =>
+      'Quando ativo, as chaves públicas serão mostradas na lista de contactos.';
 
   @override
   String get roomJoinTitle => 'Entrar na sala';
