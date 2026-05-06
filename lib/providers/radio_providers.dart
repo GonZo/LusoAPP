@@ -229,6 +229,49 @@ class ContactsNotifier extends StateNotifier<List<Contact>> {
     StorageService.instance.saveContacts(next);
   }
 
+  void setPrivateLocationOnRequest(Uint8List publicKey, bool value) {
+    final next =
+        state
+            .map(
+              (c) =>
+                  _keysEqual(c.publicKey, publicKey)
+                      ? c.withPrivateLocationOnRequest(value)
+                      : c,
+            )
+            .toList();
+    state = next;
+    _rebuildIndex(next);
+    StorageService.instance.saveContacts(next);
+  }
+
+  void updateGpsByPrefix(
+    Uint8List pubKeyPrefix,
+    double latitude,
+    double longitude,
+  ) {
+    if (pubKeyPrefix.length < 6) return;
+    final entry = _byHex6[_hex6(pubKeyPrefix)];
+    if (entry == null) return;
+    final (idx, existing) = entry;
+    final now = DateTime.now().millisecondsSinceEpoch ~/ 1000;
+    final next = [...state];
+    next[idx] = Contact(
+      publicKey: existing.publicKey,
+      type: existing.type,
+      flags: existing.flags,
+      pathLen: existing.pathLen,
+      name: existing.name,
+      lastAdvertTimestamp: existing.lastAdvertTimestamp,
+      latitude: latitude,
+      longitude: longitude,
+      lastModified: now,
+      customName: existing.customName,
+    );
+    state = next;
+    _rebuildIndex(next);
+    _scheduleSave(next);
+  }
+
   void remove(Uint8List publicKey) {
     final next =
         state.where((c) => !_keysEqual(c.publicKey, publicKey)).toList();

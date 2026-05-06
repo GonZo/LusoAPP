@@ -846,9 +846,33 @@ class ConnectionNotifier extends StateNotifier<TransportState> {
               }
             }
           }
-        case TelemetryPush(:final data):
+        case TelemetryPush(:final pubKeyPrefix, :final data):
           final readings = CayenneLPP.decode(data);
           if (readings.isNotEmpty) {
+            final gps = readings.firstWhere(
+              (r) =>
+                  r.type == CayenneType.gpsLocation &&
+                  r.gpsLatitude != null &&
+                  r.gpsLongitude != null,
+              orElse:
+                  () => const CayenneReading(
+                    channel: 0,
+                    type: CayenneType.unknown,
+                    displayValue: '',
+                    unit: '',
+                    rawValue: 0,
+                  ),
+            );
+            if (gps.gpsLatitude != null && gps.gpsLongitude != null) {
+              _ref
+                  .read(contactsProvider.notifier)
+                  .updateGpsByPrefix(
+                    pubKeyPrefix,
+                    gps.gpsLatitude!,
+                    gps.gpsLongitude!,
+                  );
+              _ref.read(contactsProvider.notifier).touchLastHeard(pubKeyPrefix);
+            }
             _ref.read(telemetryProvider.notifier).add(readings);
           }
         case PathDiscoveryPush(:final pubKeyPrefix, :final outPath):

@@ -933,6 +933,79 @@ class _ContactTile extends ConsumerWidget {
     unawaited(service.addUpdateContact(updated).catchError((_) {}));
   }
 
+  int _setTelemetryModeField(int current, int shift, int mode) {
+    final mask = 0x03 << shift;
+    return (current & ~mask) | ((mode & 0x03) << shift);
+  }
+
+  Future<void> _ensurePrivateLocationTelemetryMode(WidgetRef ref) async {
+    final service = ref.read(radioServiceProvider);
+    final self = ref.read(selfInfoProvider);
+    if (service == null || self == null) return;
+
+    final current = self.telemetryMode ?? 0;
+    var next = current;
+    next = _setTelemetryModeField(next, 0, 1);
+    next = _setTelemetryModeField(next, 2, 1);
+    if (next == current) return;
+
+    await service.setOtherParams(
+      manualAddContacts: self.manualAddContacts ?? 0,
+      telemetryMode: next,
+      advLocPolicy: self.advLocPolicy ?? 0,
+      multiAcks: self.multiAcks ?? 0,
+    );
+    ref.read(selfInfoProvider.notifier).state = self.copyWith(
+      telemetryMode: next,
+    );
+  }
+
+  Future<void> _togglePrivateLocationOnRequest(
+    BuildContext context,
+    WidgetRef ref,
+  ) async {
+    final enable = !contact.allowsPrivateLocationOnRequest;
+    final updated = contact.withPrivateLocationOnRequest(enable);
+    ref
+        .read(contactsProvider.notifier)
+        .setPrivateLocationOnRequest(contact.publicKey, enable);
+
+    final service = ref.read(radioServiceProvider);
+    if (service != null) {
+      if (enable) {
+        await _ensurePrivateLocationTelemetryMode(ref);
+      }
+      unawaited(service.addUpdateContact(updated).catchError((_) {}));
+    }
+    if (!context.mounted) return;
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text(
+          enable
+              ? 'Partilha GPS privada activada para ${contact.displayName}.'
+              : 'Partilha GPS privada desactivada para ${contact.displayName}.',
+        ),
+      ),
+    );
+  }
+
+  Future<void> _requestPrivateLocation(
+    BuildContext context,
+    WidgetRef ref,
+  ) async {
+    final service = ref.read(radioServiceProvider);
+    if (service == null) return;
+    await service.sendTelemetryRequest(contact.publicKey);
+    if (!context.mounted) return;
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text(
+          'Pedido de localização enviado para ${contact.displayName}.',
+        ),
+      ),
+    );
+  }
+
   Future<void> _saveToRadio(BuildContext context, WidgetRef ref) async {
     final service = ref.read(radioServiceProvider);
     if (service == null) return;
@@ -1061,6 +1134,36 @@ class _ContactTile extends ConsumerWidget {
                   onTap: () {
                     Navigator.pop(ctx);
                     _toggleFavorite(ref);
+                  },
+                ),
+                ListTile(
+                  leading: Icon(
+                    contact.allowsPrivateLocationOnRequest
+                        ? Icons.location_searching
+                        : Icons.location_disabled,
+                  ),
+                  title: Text(
+                    contact.allowsPrivateLocationOnRequest
+                        ? 'Desactivar partilha GPS privada'
+                        : 'Activar partilha GPS privada',
+                  ),
+                  subtitle: const Text(
+                    'Permite a este contacto pedir a tua localização on-demand, sem beacon público.',
+                  ),
+                  onTap: () {
+                    Navigator.pop(ctx);
+                    unawaited(_togglePrivateLocationOnRequest(context, ref));
+                  },
+                ),
+                ListTile(
+                  leading: const Icon(Icons.my_location_outlined),
+                  title: const Text('Pedir localização'),
+                  subtitle: const Text(
+                    'Envia um pedido privado de localização/telemetria a este contacto.',
+                  ),
+                  onTap: () {
+                    Navigator.pop(ctx);
+                    unawaited(_requestPrivateLocation(context, ref));
                   },
                 ),
                 // QR

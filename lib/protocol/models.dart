@@ -144,9 +144,30 @@ class Contact extends Equatable {
   /// The whole [flags] byte is round-tripped unchanged through RESP_CONTACT /
   /// CMD_ADD_UPDATE_CONTACT, so toggling bit 0 on the app side is authoritative.
   static const int _flagFavoriteMask = 0x01;
+  static const int _flagTelemetryBaseMask = 0x02;
+  static const int _flagTelemetryLocationMask = 0x04;
+  static const int _flagTelemetryEnvironmentMask = 0x08;
 
   /// True when this contact is marked as a favourite on the radio.
   bool get isFavorite => (flags & _flagFavoriteMask) != 0;
+
+  /// True when this contact is allowed to request base telemetry
+  /// (required for any telemetry response to be sent at all).
+  bool get allowsTelemetryBase => (flags & _flagTelemetryBaseMask) != 0;
+
+  /// True when this contact is allowed to receive location via on-demand
+  /// telemetry requests.
+  bool get allowsTelemetryLocation => (flags & _flagTelemetryLocationMask) != 0;
+
+  /// True when this contact is allowed to receive environment telemetry.
+  bool get allowsTelemetryEnvironment =>
+      (flags & _flagTelemetryEnvironmentMask) != 0;
+
+  /// Convenience view for the GPS-sharing Delta01 flow: a contact needs both
+  /// BASE and LOCATION permission bits set for the firmware to answer with
+  /// coordinates on request.
+  bool get allowsPrivateLocationOnRequest =>
+      allowsTelemetryBase && allowsTelemetryLocation;
 
   /// Returns a copy of this contact with bit 0 of [flags] set to [value].
   /// All other bits (permissions encoded in the upper bits) are preserved.
@@ -167,6 +188,52 @@ class Contact extends Equatable {
       customName: customName,
     );
   }
+
+  /// Returns a copy with the telemetry permission bits updated while keeping
+  /// the favourite bit and all unrelated flags intact.
+  Contact withTelemetryPermissions({
+    bool? base,
+    bool? location,
+    bool? environment,
+  }) {
+    var newFlags = flags;
+    if (base != null) {
+      newFlags =
+          base
+              ? (newFlags | _flagTelemetryBaseMask)
+              : (newFlags & ~_flagTelemetryBaseMask);
+    }
+    if (location != null) {
+      newFlags =
+          location
+              ? (newFlags | _flagTelemetryLocationMask)
+              : (newFlags & ~_flagTelemetryLocationMask);
+    }
+    if (environment != null) {
+      newFlags =
+          environment
+              ? (newFlags | _flagTelemetryEnvironmentMask)
+              : (newFlags & ~_flagTelemetryEnvironmentMask);
+    }
+    if (newFlags == flags) return this;
+    return Contact(
+      publicKey: publicKey,
+      type: type,
+      flags: newFlags,
+      pathLen: pathLen,
+      name: name,
+      lastAdvertTimestamp: lastAdvertTimestamp,
+      latitude: latitude,
+      longitude: longitude,
+      lastModified: lastModified,
+      customName: customName,
+    );
+  }
+
+  /// Enable/disable the specific flag combination the firmware needs to serve
+  /// location privately on request for this contact.
+  Contact withPrivateLocationOnRequest(bool value) =>
+      withTelemetryPermissions(base: value, location: value);
 
   @override
   List<Object?> get props => [publicKey, type, name, customName];

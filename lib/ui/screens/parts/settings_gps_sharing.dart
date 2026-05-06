@@ -94,11 +94,12 @@ class _GpsSharingCard extends ConsumerWidget {
               onSelectionChanged: (sel) async {
                 final m = sel.first;
                 await ref.read(gpsSharingProvider.notifier).setMode(m);
-                // Keep the radio's advert-location-policy in lock-step with
-                // the app mode so the user only has one knob to think about:
-                //   Off    → radio also stops broadcasting location
-                //   Manual → radio starts broadcasting (uses last pushed fix)
-                //   Auto   → radio starts broadcasting (auto-refreshed by app)
+                // Delta01: sharing phone GPS with the radio and broadcasting
+                // that location publicly are no longer the same thing.
+                // We still force Off -> no public location broadcast, but when
+                // switching to Manual/Auto we preserve the user's explicit
+                // advanced advert policy choice so private on-demand sharing
+                // can remain private.
                 await _syncRadioPolicyWithMode(ref, m);
                 if (!context.mounted) return;
                 if (m == GpsSharingMode.off) {
@@ -316,9 +317,11 @@ class _GpsSharingCard extends ConsumerWidget {
   }
 
   /// Mirror the chosen [mode] onto the radio's `adv_loc_policy` byte so the
-  /// app and the radio always agree on whether location should be broadcast.
-  /// No-op when disconnected, when self-info isn't loaded yet, or when the
-  /// policy already matches.
+  /// app can guarantee that OFF really means "not broadcast publicly".
+  /// Manual and Auto now preserve the user's explicit advert-policy choice,
+  /// allowing private on-demand telemetry sharing without public adverts.
+  /// No-op when disconnected, when self-info isn't loaded yet, or when no
+  /// policy change is required.
   static Future<void> _syncRadioPolicyWithMode(
     WidgetRef ref,
     GpsSharingMode mode,
@@ -326,7 +329,8 @@ class _GpsSharingCard extends ConsumerWidget {
     final svc = ref.read(radioServiceProvider);
     final self = ref.read(selfInfoProvider);
     if (svc == null || self == null) return;
-    final desired = mode == GpsSharingMode.off ? 0 : 1;
+    if (mode != GpsSharingMode.off) return;
+    const desired = 0;
     if (self.advLocPolicy == desired) return;
     await svc.setOtherParams(
       manualAddContacts: self.manualAddContacts ?? 0,

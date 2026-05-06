@@ -241,6 +241,10 @@ class RadioService {
     await _send(_buildFrame(cmdSendStatusReq, payload.toBytes()));
   }
 
+  Future<void> sendTelemetryRequest(Uint8List pubKey) async {
+    await _send(CompanionEncoder.sendTelemetryReq(pubKey));
+  }
+
   /// Build a raw companion frame without going through CompanionEncoder.
   Uint8List _buildFrame(int command, Uint8List payload) {
     final totalLen = 1 + payload.length;

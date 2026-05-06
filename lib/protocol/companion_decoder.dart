@@ -114,7 +114,13 @@ class CompanionDecoder {
       case pushTraceData:
         return TraceDataPush(data);
       case pushTelemetryResponse:
-        return TelemetryPush(data);
+        if (data.length < 7) {
+          return TelemetryPush(Uint8List(0), Uint8List(0));
+        }
+        return TelemetryPush(
+          Uint8List.fromList(data.sublist(1, 7)),
+          Uint8List.fromList(data.sublist(7)),
+        );
       case pushBinaryResponse:
         return _parseBinaryResponse(data);
       case pushPathDiscoveryResponse:

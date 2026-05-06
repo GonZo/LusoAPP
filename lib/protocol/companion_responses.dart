@@ -126,7 +126,8 @@ class TraceDataPush extends CompanionResponse {
 }
 
 class TelemetryPush extends CompanionResponse {
-  const TelemetryPush(this.data);
+  const TelemetryPush(this.pubKeyPrefix, this.data);
+  final Uint8List pubKeyPrefix;
   final Uint8List data;
 }
 
