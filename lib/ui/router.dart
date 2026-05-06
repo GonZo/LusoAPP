@@ -36,7 +36,7 @@ final routerProvider = Provider<GoRouter>((ref) {
       final loc = state.matchedLocation;
       if (loc.startsWith('meshcore-widget') ||
           state.uri.scheme == 'meshcore-widget') {
-        // Land on the channels list \u2014 a stable, always-available shell
+        // Land on the channels list — a stable, always-available shell
         // route. The widget action handler in main.dart will then re-route
         // to the right destination (chats / map / connect / etc.).
         return '/channels';
@@ -48,96 +48,130 @@ final routerProvider = Provider<GoRouter>((ref) {
         path: '/connect',
         builder: (context, state) => const ConnectScreen(),
       ),
-      ShellRoute(
-        builder: (context, state, child) => HomeScreen(child: child),
-        routes: [
-          GoRoute(
-            path: '/channels',
-            builder: (context, state) => const ChannelsListScreen(),
+      StatefulShellRoute.indexedStack(
+        builder: (context, state, navigationShell) {
+          return HomeScreen(
+            navigationShell: navigationShell,
+            currentPath: state.uri.path,
+          );
+        },
+        branches: [
+          StatefulShellBranch(
+            routes: [
+              GoRoute(
+                path: '/channels',
+                builder: (context, state) => const ChannelsListScreen(),
+                routes: [
+                  GoRoute(
+                    path: ':index',
+                    builder: (context, state) {
+                      final index = int.parse(state.pathParameters['index']!);
+                      return ChannelChatScreen(channelIndex: index);
+                    },
+                  ),
+                ],
+              ),
+            ],
           ),
-          GoRoute(
-            path: '/channels/:index',
-            builder: (context, state) {
-              final index = int.parse(state.pathParameters['index']!);
-              return ChannelChatScreen(channelIndex: index);
-            },
+          StatefulShellBranch(
+            preload: true,
+            routes: [
+              GoRoute(
+                path: '/contacts',
+                builder: (context, state) => const ContactsScreen(),
+              ),
+              GoRoute(
+                path: '/discover',
+                builder: (context, state) => const DiscoverContactsScreen(),
+              ),
+              GoRoute(
+                path: '/chat/:keyHex',
+                builder: (context, state) {
+                  final keyHex = state.pathParameters['keyHex']!;
+                  return PrivateChatScreen(contactKeyHex: keyHex);
+                },
+              ),
+              GoRoute(
+                path: '/room/:keyHex',
+                builder: (context, state) {
+                  final keyHex = state.pathParameters['keyHex']!;
+                  return RoomScreen(contactKeyHex: keyHex);
+                },
+              ),
+              GoRoute(
+                path: '/repeater/:keyHex',
+                builder: (context, state) {
+                  final keyHex = state.pathParameters['keyHex']!;
+                  return RepeaterScreen(contactKeyHex: keyHex);
+                },
+              ),
+            ],
           ),
-          GoRoute(
-            path: '/contacts',
-            builder: (context, state) => const ContactsScreen(),
+          StatefulShellBranch(
+            preload: true,
+            routes: [
+              GoRoute(
+                path: '/map',
+                builder: (context, state) => const MapScreen(),
+              ),
+            ],
           ),
-          GoRoute(
-            path: '/discover',
-            builder: (context, state) => const DiscoverContactsScreen(),
+          StatefulShellBranch(
+            preload: true,
+            routes: [
+              GoRoute(
+                path: '/apps',
+                builder: (context, state) => const AppsScreen(),
+              ),
+              if (FeatureToggles.appPlan333)
+                GoRoute(
+                  path: '/apps/plan333',
+                  builder: (context, state) => const Plan333Screen(),
+                ),
+              if (FeatureToggles.appTelemetry)
+                GoRoute(
+                  path: '/apps/telemetry',
+                  builder: (context, state) => const TelemetryScreen(),
+                ),
+              if (FeatureToggles.appRxLog)
+                GoRoute(
+                  path: '/apps/rxlog',
+                  builder: (context, state) => const RxLogScreen(),
+                ),
+              if (FeatureToggles.appNoiseFloor)
+                GoRoute(
+                  path: '/apps/noisefloor',
+                  builder: (context, state) => const NoiseFloorScreen(),
+                ),
+              if (FeatureToggles.appTopology)
+                GoRoute(
+                  path: '/apps/topology',
+                  builder: (context, state) => const TopologyScreen(),
+                ),
+              if (FeatureToggles.appDataExport)
+                GoRoute(
+                  path: '/apps/dataexport',
+                  builder: (context, state) => const DataExportScreen(),
+                ),
+              if (FeatureToggles.appEvent)
+                GoRoute(
+                  path: '/apps/event',
+                  builder: (context, state) => const EventProgramScreen(),
+                ),
+            ],
           ),
-          GoRoute(path: '/map', builder: (context, state) => const MapScreen()),
-          GoRoute(
-            path: '/apps',
-            builder: (context, state) => const AppsScreen(),
-          ),
-          if (FeatureToggles.appPlan333)
-            GoRoute(
-              path: '/apps/plan333',
-              builder: (context, state) => const Plan333Screen(),
-            ),
-          if (FeatureToggles.appTelemetry)
-            GoRoute(
-              path: '/apps/telemetry',
-              builder: (context, state) => const TelemetryScreen(),
-            ),
-          if (FeatureToggles.appRxLog)
-            GoRoute(
-              path: '/apps/rxlog',
-              builder: (context, state) => const RxLogScreen(),
-            ),
-          if (FeatureToggles.appNoiseFloor)
-            GoRoute(
-              path: '/apps/noisefloor',
-              builder: (context, state) => const NoiseFloorScreen(),
-            ),
-          if (FeatureToggles.appTopology)
-            GoRoute(
-              path: '/apps/topology',
-              builder: (context, state) => const TopologyScreen(),
-            ),
-          if (FeatureToggles.appDataExport)
-            GoRoute(
-              path: '/apps/dataexport',
-              builder: (context, state) => const DataExportScreen(),
-            ),
-          if (FeatureToggles.appEvent)
-            GoRoute(
-              path: '/apps/event',
-              builder: (context, state) => const EventProgramScreen(),
-            ),
-          GoRoute(
-            path: '/chat/:keyHex',
-            builder: (context, state) {
-              final keyHex = state.pathParameters['keyHex']!;
-              return PrivateChatScreen(contactKeyHex: keyHex);
-            },
-          ),
-          GoRoute(
-            path: '/room/:keyHex',
-            builder: (context, state) {
-              final keyHex = state.pathParameters['keyHex']!;
-              return RoomScreen(contactKeyHex: keyHex);
-            },
-          ),
-          GoRoute(
-            path: '/repeater/:keyHex',
-            builder: (context, state) {
-              final keyHex = state.pathParameters['keyHex']!;
-              return RepeaterScreen(contactKeyHex: keyHex);
-            },
-          ),
-          GoRoute(
-            path: '/settings',
-            builder: (context, state) => const SettingsScreen(),
-          ),
-          GoRoute(
-            path: '/settings/radio',
-            builder: (context, state) => const RadioSettingsScreen(),
+          StatefulShellBranch(
+            preload: true,
+            routes: [
+              GoRoute(
+                path: '/settings',
+                builder: (context, state) => const SettingsScreen(),
+              ),
+              GoRoute(
+                path: '/settings/radio',
+                builder: (context, state) => const RadioSettingsScreen(),
+              ),
+            ],
           ),
         ],
       ),

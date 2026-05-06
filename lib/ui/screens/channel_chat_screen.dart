@@ -276,7 +276,16 @@ class _ChannelChatScreenState extends ConsumerState<ChannelChatScreen> {
     final selfName = ref.watch(selfInfoProvider)?.name;
     final selfMentionColor = ref.watch(selfMentionColorProvider);
     final otherMentionColor = ref.watch(otherMentionColorProvider);
-    final channels = ref.watch(channelsProvider);
+    // Watch only this channel's name to avoid rebuilding on other channel updates
+    final channelName = ref.watch(
+      channelsProvider.select(
+        (channels) =>
+            channels
+                .where((c) => c.index == widget.channelIndex)
+                .map((c) => c.name)
+                .firstOrNull,
+      ),
+    );
     // O(1) partition lookup — no filter scan over all messages (#7 perf fix).
     final channelMessages = ref
         .read(messagesProvider.notifier)
@@ -285,12 +294,6 @@ class _ChannelChatScreenState extends ConsumerState<ChannelChatScreen> {
     final isMuted = ref.watch(
       mutedChannelsProvider.select((s) => s.contains(widget.channelIndex)),
     );
-
-    final channelName =
-        channels
-            .where((c) => c.index == widget.channelIndex)
-            .map((c) => c.name)
-            .firstOrNull;
 
     return Column(
       children: [

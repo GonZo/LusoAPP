@@ -253,15 +253,24 @@ class _MapScreenState extends ConsumerState<MapScreen> {
 
   @override
   Widget build(BuildContext context) {
-    final contacts = ref.watch(contactsProvider);
+    // Select only contacts with valid GPS coordinates to avoid rebuilding
+    // when other contact properties change (minimizes tab switching lag).
+    final gpsContacts = ref.watch(
+      contactsProvider.select(
+        (contacts) =>
+            contacts
+                .where((c) => _isValidGps(c.latitude, c.longitude))
+                .toList(),
+      ),
+    );
     final selfInfo = ref.watch(selfInfoProvider);
     final traceResult = ref.watch(traceResultProvider);
     final hidden = ref.watch(mapHiddenContactsProvider);
     final theme = Theme.of(context);
 
-    final gpsContacts =
-        contacts
-            .where((c) => _isValidGps(c.latitude, c.longitude))
+    // Apply hidden filter
+    final visibleGpsContacts =
+        gpsContacts
             .where((c) => !hidden.contains(_pubKeyHex(c.publicKey)))
             .toList();
 
@@ -274,7 +283,7 @@ class _MapScreenState extends ConsumerState<MapScreen> {
             : _myLocation;
 
     final allPoints = [
-      ...gpsContacts.map((c) => LatLng(c.latitude!, c.longitude!)),
+      ...visibleGpsContacts.map((c) => LatLng(c.latitude!, c.longitude!)),
       if (selfPos != null) selfPos,
     ];
 
@@ -282,8 +291,11 @@ class _MapScreenState extends ConsumerState<MapScreen> {
 
     final initialCenter =
         selfPos ??
-        (gpsContacts.isNotEmpty
-            ? LatLng(gpsContacts.first.latitude!, gpsContacts.first.longitude!)
+        (visibleGpsContacts.isNotEmpty
+            ? LatLng(
+              visibleGpsContacts.first.latitude!,
+              visibleGpsContacts.first.longitude!,
+            )
             : _defaultCenter);
 
     return Stack(
@@ -343,7 +355,9 @@ class _MapScreenState extends ConsumerState<MapScreen> {
                   MarkerLayer(
                     markers: [
                       if (traceResult == null)
-                        for (final cluster in _computeClusters(gpsContacts))
+                        for (final cluster in _computeClusters(
+                          visibleGpsContacts,
+                        ))
                           if (cluster.isSingle)
                             Marker(
                               point: cluster.center,

@@ -14,7 +14,6 @@ import '../../protocol/protocol.dart';
 import '../../providers/radio_providers.dart';
 import 'qr_scanner_screen.dart';
 
-
 part 'parts/channels_create_sheets.dart';
 part 'parts/channels_edit_sheet.dart';
 part 'parts/channels_list_widgets.dart';
@@ -106,19 +105,28 @@ class _ChannelsListScreenState extends ConsumerState<ChannelsListScreen> {
     ref.listen<List<ChannelInfo>>(channelsProvider, (_, next) {
       _loadAllChannelMessages(next);
     });
-    final unread = ref.watch(unreadCountsProvider);
+    // Watch only the channels-related unread counts
+    final channelsUnreadStatus = ref.watch(
+      unreadCountsProvider.select((counts) => counts.channels),
+    );
     // Watch overall message count so the sort updates when messages arrive;
     // the actual per-channel lookup is O(1) via the notifier partition.
     ref.watch(messagesProvider.select((msgs) => msgs.length));
-    final maxChannels = ref.watch(deviceInfoProvider)?.maxChannels ?? 8;
+    final maxChannels = ref.watch(
+      deviceInfoProvider.select((info) => info?.maxChannels ?? 8),
+    );
 
     final configured = channels.where((c) => c.name.isNotEmpty).toList();
     final unreadChannelCount =
-        configured.where((c) => unread.forChannel(c.index) > 0).length;
+        configured
+            .where((c) => (channelsUnreadStatus[c.index] ?? 0) > 0)
+            .length;
 
     final filtered =
         _filter == _Filter.naoLidos
-            ? configured.where((c) => unread.forChannel(c.index) > 0).toList()
+            ? configured
+                .where((c) => (channelsUnreadStatus[c.index] ?? 0) > 0)
+                .toList()
             : List<ChannelInfo>.from(configured);
 
     final notifier = ref.read(messagesProvider.notifier);

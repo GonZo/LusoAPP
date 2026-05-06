@@ -194,11 +194,13 @@ class _PrivateChatScreenState extends ConsumerState<PrivateChatScreen> {
       _showTraceSheet(next);
     });
 
-    final selfName = ref.watch(selfInfoProvider)?.name;
+    final selfName = ref.watch(selfInfoProvider.select((info) => info?.name));
     final selfMentionColor = ref.watch(selfMentionColorProvider);
     final otherMentionColor = ref.watch(otherMentionColorProvider);
-    final contacts = ref.watch(contactsProvider);
-    final contact = _findContact(contacts);
+    // Watch only this specific contact to avoid rebuilds when other contacts change
+    final contact = ref.watch(
+      contactsProvider.select((contacts) => _findContact(contacts)),
+    );
     final theme = Theme.of(context);
 
     // O(1) partition lookup — no filter scan over all messages (#7 perf fix).
