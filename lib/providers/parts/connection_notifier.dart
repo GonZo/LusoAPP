@@ -5,16 +5,26 @@ part of '../radio_providers.dart';
 // ---------------------------------------------------------------------------
 
 class ConnectionNotifier extends StateNotifier<TransportState> {
-  ConnectionNotifier(this._ref) : super(TransportState.disconnected);
+  ConnectionNotifier(this._ref) : super(TransportState.disconnected) {
+    _lifecycleSub = AppLifecycleObserver.stateChanges.listen(
+      _handleLifecycleState,
+    );
+  }
   final Ref _ref;
 
   StreamSubscription<void>? _connectionLostSub;
   StreamSubscription<CompanionResponse>? _responseSub;
+  StreamSubscription<AppLifecycleState>? _lifecycleSub;
   Timer? _batteryPollTimer;
   Timer? _keepaliveTimer;
 
   /// Set to true in [disconnect] to abort any in-progress reconnect loop.
   bool _reconnectCancelled = false;
+  bool _manualDisconnect = false;
+  Future<bool> Function()? _lastReconnector;
+
+  static const _keepaliveFgInterval = Duration(seconds: 15);
+  static const _keepaliveBgInterval = Duration(seconds: 7);
 
   /// When true the next [EndContactsResponse] will also update
   /// [radioContactsSnapshotProvider].  Set before explicit contact syncs
@@ -28,6 +38,7 @@ class ConnectionNotifier extends StateNotifier<TransportState> {
   }
 
   Future<bool> connectBle(String deviceId, String deviceName) async {
+    _manualDisconnect = false;
     // Clear stale snapshot and sync flag so the contacts screen falls back
     // to the cached list while the new radio's sync is in progress.
     _ref.read(radioContactsSnapshotProvider.notifier).state = {};
@@ -77,7 +88,13 @@ class ConnectionNotifier extends StateNotifier<TransportState> {
         _ref.read(lastDeviceProvider.notifier).state = recentList.first;
         _setupAutoReconnect(service, () => connectBle(deviceId, deviceName));
         _startBatteryPolling(service);
-        _startKeepalive(service);
+        _startKeepalive(
+          service,
+          interval:
+              AppLifecycleObserver.isInForeground
+                  ? _keepaliveFgInterval
+                  : _keepaliveBgInterval,
+        );
         _pushWidget();
         return true;
       }
@@ -97,6 +114,7 @@ class ConnectionNotifier extends StateNotifier<TransportState> {
     String deviceName, {
     ConnectionMode mode = ConnectionMode.companion,
   }) async {
+    _manualDisconnect = false;
     // Clear stale snapshot and sync flag so the contacts screen falls back
     // to the cached list while the new radio's sync is in progress.
     _ref.read(radioContactsSnapshotProvider.notifier).state = {};
@@ -152,7 +170,13 @@ class ConnectionNotifier extends StateNotifier<TransportState> {
         _ref.read(recentDevicesProvider.notifier).state = recentList;
         _ref.read(lastDeviceProvider.notifier).state = recentList.first;
         _startBatteryPolling(service);
-        _startKeepalive(service);
+        _startKeepalive(
+          service,
+          interval:
+              AppLifecycleObserver.isInForeground
+                  ? _keepaliveFgInterval
+                  : _keepaliveBgInterval,
+        );
         // Wire the connection-lost signal so that an unexpected USB disconnect
         // (e.g. cable pulled, OTG power loss, OS driver reset) triggers the
         // same exponential back-off retry loop used by BLE connections.
@@ -197,6 +221,7 @@ class ConnectionNotifier extends StateNotifier<TransportState> {
     String deviceName, {
     ConnectionMode mode = ConnectionMode.companion,
   }) async {
+    _manualDisconnect = false;
     // Clear stale snapshot and sync flag so the contacts screen falls back
     // to the cached list while the new radio's sync is in progress.
     _ref.read(radioContactsSnapshotProvider.notifier).state = {};
@@ -271,7 +296,13 @@ class ConnectionNotifier extends StateNotifier<TransportState> {
         _ref.read(lastDeviceProvider.notifier).state = recentList.first;
 
         _startBatteryPolling(service);
-        _startKeepalive(service);
+        _startKeepalive(
+          service,
+          interval:
+              AppLifecycleObserver.isInForeground
+                  ? _keepaliveFgInterval
+                  : _keepaliveBgInterval,
+        );
 
         // Wire the connection-lost signal so that an unexpected USB disconnect
         // (cable pulled, browser killing the port) triggers the same exponential
@@ -310,6 +341,7 @@ class ConnectionNotifier extends StateNotifier<TransportState> {
   }
 
   Future<void> disconnect() async {
+    _manualDisconnect = true;
     _reconnectCancelled = true;
     _batteryPollTimer?.cancel();
     _batteryPollTimer = null;
@@ -392,12 +424,62 @@ class ConnectionNotifier extends StateNotifier<TransportState> {
   /// and its response is already handled by the normal response stream, so it
   /// produces no extra UI rebuilds. Errors are silently swallowed — if the
   /// radio is gone the connectionState listener will fire connectionLost.
-  void _startKeepalive(RadioService service) {
+  void _startKeepalive(
+    RadioService service, {
+    Duration interval = _keepaliveFgInterval,
+  }) {
     _keepaliveTimer?.cancel();
-    _keepaliveTimer = Timer.periodic(const Duration(seconds: 15), (_) {
+    _keepaliveTimer = Timer.periodic(interval, (_) {
       if (state != TransportState.connected) return;
       service.requestBattAndStorage().catchError((_) {});
     });
+  }
+
+  void _handleLifecycleState(AppLifecycleState lifecycle) {
+    final service = _ref.read(radioServiceProvider);
+
+    final isBackground =
+        lifecycle == AppLifecycleState.inactive ||
+        lifecycle == AppLifecycleState.hidden ||
+        lifecycle == AppLifecycleState.paused;
+
+    if (isBackground) {
+      if (service != null && state == TransportState.connected) {
+        _startKeepalive(service, interval: _keepaliveBgInterval);
+      }
+      return;
+    }
+
+    if (lifecycle == AppLifecycleState.resumed) {
+      if (service != null && state == TransportState.connected) {
+        _startKeepalive(service, interval: _keepaliveFgInterval);
+        service.requestBattAndStorage().catchError((_) {});
+        return;
+      }
+      if (!_manualDisconnect) {
+        unawaited(_recoverOnResume());
+      }
+    }
+  }
+
+  Future<void> _recoverOnResume() async {
+    if (state == TransportState.connected ||
+        state == TransportState.connecting) {
+      return;
+    }
+    if (!_ref.read(autoReconnectProvider)) return;
+
+    final reconnector = _lastReconnector;
+    if (reconnector == null) return;
+
+    _setStep(0, 'App retomada. A verificar ligação...');
+    state = TransportState.connecting;
+    final ok = await reconnector();
+    if (!ok && state != TransportState.connected) {
+      state = TransportState.error;
+      _setStep(0, 'Reconexão ao retomar falhou.');
+      _pushWidget();
+    }
   }
 
   /// Subscribe to unexpected connection loss and attempt auto-reconnect with
@@ -410,6 +492,7 @@ class ConnectionNotifier extends StateNotifier<TransportState> {
     RadioService service,
     Future<bool> Function() reconnector,
   ) {
+    _lastReconnector = reconnector;
     _connectionLostSub?.cancel();
     _connectionLostSub = service.connectionLost.listen((_) async {
       if (state != TransportState.connected) return;
@@ -466,6 +549,16 @@ class ConnectionNotifier extends StateNotifier<TransportState> {
         _pushWidget();
       }
     });
+  }
+
+  @override
+  void dispose() {
+    _lifecycleSub?.cancel();
+    _keepaliveTimer?.cancel();
+    _batteryPollTimer?.cancel();
+    _connectionLostSub?.cancel();
+    _responseSub?.cancel();
+    super.dispose();
   }
 
   void _setupListeners(RadioService service) {

@@ -109,10 +109,16 @@ class CannedMessagesNotifier extends StateNotifier<List<CannedMessage>> {
         return;
       }
       final decoded = jsonDecode(raw) as List;
-      state =
+      final loaded =
           decoded
               .map((e) => CannedMessage.fromJson(e as Map<String, dynamic>))
               .toList();
+      if (loaded.isEmpty) {
+        state = _defaultLibrary();
+        await _persist();
+        return;
+      }
+      state = loaded;
     } catch (_) {
       state = _defaultLibrary();
     }

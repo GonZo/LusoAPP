@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter/foundation.dart';
 import 'package:flutter/widgets.dart';
 import 'package:flutter_local_notifications/flutter_local_notifications.dart';
@@ -432,11 +434,15 @@ class NotificationService {
 /// Register once with [WidgetsBinding.instance.addObserver] in main.dart.
 class AppLifecycleObserver extends WidgetsBindingObserver {
   static AppLifecycleState _state = AppLifecycleState.resumed;
+  static final _stateController =
+      StreamController<AppLifecycleState>.broadcast();
 
   static bool get isInForeground => _state == AppLifecycleState.resumed;
+  static Stream<AppLifecycleState> get stateChanges => _stateController.stream;
 
   @override
   void didChangeAppLifecycleState(AppLifecycleState state) {
     _state = state;
+    _stateController.add(state);
   }
 }
