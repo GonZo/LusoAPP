@@ -66,10 +66,10 @@ class BleTransport implements RadioTransport {
       );
       await (!kIsWeb && Platform.isWindows
           ? connectFuture.timeout(
-              const Duration(seconds: 15),
-              onTimeout: () =>
-                  throw TimeoutException('BLE connect timed out (Windows)'),
-            )
+            const Duration(seconds: 15),
+            onTimeout:
+                () => throw TimeoutException('BLE connect timed out (Windows)'),
+          )
           : connectFuture);
 
       // On native platforms, request a larger MTU before service discovery.
@@ -251,6 +251,26 @@ class BleTransport implements RadioTransport {
     return deviceName.toLowerCase().contains('meshcore');
   }
 
+  /// Platform scan inclusion rule used by the native listener.
+  /// We keep the same MeshCore filter on Android and iOS to avoid flooding
+  /// the list with unrelated BLE devices.
+  static bool _shouldIncludeScanResult(ScanResult r) {
+    final advName = r.advertisementData.advName.toLowerCase().trim();
+    final platformName = r.device.platformName.toLowerCase().trim();
+    return advName.startsWith('meshcore') ||
+        platformName.startsWith('meshcore');
+  }
+
+  static String _displayNameForScanResult(ScanResult r) {
+    if (r.advertisementData.advName.isNotEmpty) {
+      return r.advertisementData.advName;
+    }
+    if (r.device.platformName.isNotEmpty) {
+      return r.device.platformName;
+    }
+    return 'BLE (${r.device.remoteId.str.substring(0, 8)})';
+  }
+
   /// Scan for MeshCore BLE devices.
   ///
   /// On Windows, delegates entirely to [WinBleBridge.scan] which uses
@@ -275,20 +295,58 @@ class BleTransport implements RadioTransport {
     final seen = <String>{};
 
     Future<void> doScan() async {
+      if (!kIsWeb && Platform.isAndroid) {
+        void addKnownAndroidDevice(BluetoothDevice d) {
+          final id = d.remoteId.str;
+          final name = d.platformName;
+          if (seen.contains(id) || controller.isClosed) return;
+
+          // Only include known devices whose platform name starts with
+          // "meshcore" as requested by the app UX requirement.
+          if (name.toLowerCase().trim().startsWith('meshcore')) {
+            seen.add(id);
+            controller.add(
+              RadioDevice(id: id, name: name, type: RadioDeviceType.ble),
+            );
+          }
+        }
+
+        try {
+          final system = await FlutterBluePlus.systemDevices(const []);
+          for (final d in system) {
+            addKnownAndroidDevice(d);
+          }
+        } catch (e) {
+          _log.w('Could not read Android system BLE devices: $e');
+        }
+
+        try {
+          final bonded = await FlutterBluePlus.bondedDevices;
+          for (final d in bonded) {
+            addKnownAndroidDevice(d);
+          }
+        } catch (e) {
+          _log.w('Could not read Android bonded BLE devices: $e');
+        }
+      }
+
       // Subscribe BEFORE startScan — critical on web where startScan blocks
       // inside requestDevice() and emits the chosen device before returning.
       final sub = FlutterBluePlus.onScanResults.listen((results) {
         for (final r in results) {
+          final displayName = _displayNameForScanResult(r);
+
+          // Native uses broad scan + client-side filter.
+          if (!kIsWeb && !_shouldIncludeScanResult(r)) {
+            continue;
+          }
           if (!seen.contains(r.device.remoteId.str)) {
             seen.add(r.device.remoteId.str);
             if (!controller.isClosed) {
               controller.add(
                 RadioDevice(
                   id: r.device.remoteId.str,
-                  name:
-                      r.device.platformName.isNotEmpty
-                          ? r.device.platformName
-                          : 'MeshCore (${r.device.remoteId.str.substring(0, 8)})',
+                  name: displayName,
                   type: RadioDeviceType.ble,
                   rssi: r.rssi,
                 ),
@@ -300,53 +358,63 @@ class BleTransport implements RadioTransport {
 
       try {
         await FlutterBluePlus.startScan(
-          withServices: [BleUuids.service],
+          // On web, withServices drives the browser's requestDevice() picker
+          // filter — required so the user only sees NUS devices.
+          // On native (Android/iOS/Linux/macOS) we omit the service filter so
+          // that dev devices advertising only by name (not NUS UUID) are
+          // visible; filtering is done client-side in the listener above.
+          withServices: kIsWeb ? [BleUuids.service] : [],
           // Required on web: declares service UUIDs in requestDevice()
           // optionalServices so discoverServices() is not blocked by the
           // browser security model (separate from the picker filters above).
           webOptionalServices: [BleUuids.service],
           timeout: timeout,
+          androidScanMode: AndroidScanMode.lowLatency,
         );
       } catch (e) {
         _log.e('BLE startScan failed: $e');
       }
 
-      if (!kIsWeb) {
-        // On native (Android/iOS/Linux/macOS) the scan runs for `timeout`;
-        // wait for it to stop before closing.
-        await FlutterBluePlus.isScanning.where((scanning) => !scanning).first;
-      } else {
-        // On web, `startScan` returns as soon as the user picks a device from
-        // `requestDevice()`. However, flutter_blue_plus buffers the result in
-        // `_BufferStream` and only delivers it to `_scanResults` (and therefore
-        // to our `sub` listener above) after 1–2 asynchronous event-loop turns.
-        // If we cancelled `sub` immediately the device event would be lost.
-        //
-        // Fix: yield briefly so `_scanSubscription` can process the buffered
-        // response and push to `_scanResults`. Then check `lastScanResults`
-        // as a guaranteed fallback for any device that still wasn't delivered
-        // to our listener in time.
-        await Future<void>.delayed(const Duration(milliseconds: 100));
-        for (final r in FlutterBluePlus.lastScanResults) {
-          if (!seen.contains(r.device.remoteId.str) && !controller.isClosed) {
-            seen.add(r.device.remoteId.str);
-            controller.add(
-              RadioDevice(
-                id: r.device.remoteId.str,
-                name:
-                    r.device.platformName.isNotEmpty
-                        ? r.device.platformName
-                        : 'MeshCore (${r.device.remoteId.str.substring(0, 8)})',
-                type: RadioDeviceType.ble,
-                rssi: r.rssi,
-              ),
-            );
+      try {
+        if (!kIsWeb) {
+          // On native (Android/iOS/Linux/macOS) the scan runs for `timeout`;
+          // wait for it to stop before closing.
+          await FlutterBluePlus.isScanning.where((scanning) => !scanning).first;
+
+          // No Android fallback list: search results are intentionally limited
+          // to names starting with "meshcore".
+        } else {
+          // On web, `startScan` returns as soon as the user picks a device from
+          // `requestDevice()`. However, flutter_blue_plus buffers the result in
+          // `_BufferStream` and only delivers it to `_scanResults` (and therefore
+          // to our `sub` listener above) after 1–2 asynchronous event-loop turns.
+          // If we cancelled `sub` immediately the device event would be lost.
+          //
+          // Fix: yield briefly so `_scanSubscription` can process the buffered
+          // response and push to `_scanResults`. Then check `lastScanResults`
+          // as a guaranteed fallback for any device that still wasn't delivered
+          // to our listener in time.
+          await Future<void>.delayed(const Duration(milliseconds: 100));
+          for (final r in FlutterBluePlus.lastScanResults) {
+            if (!seen.contains(r.device.remoteId.str) && !controller.isClosed) {
+              seen.add(r.device.remoteId.str);
+              controller.add(
+                RadioDevice(
+                  id: r.device.remoteId.str,
+                  name: _displayNameForScanResult(r),
+                  type: RadioDeviceType.ble,
+                  rssi: r.rssi,
+                ),
+              );
+            }
           }
         }
+      } catch (e) {
+        _log.e('BLE scan wait failed: $e');
+      } finally {
+        await sub.cancel();
+        await controller.close();
       }
-
-      await sub.cancel();
-      await controller.close();
     }
 
     doScan();

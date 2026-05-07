@@ -15,8 +15,8 @@ import '../../services/storage_service.dart';
 import '../../transport/transport.dart';
 import '../theme.dart';
 
-
 part 'parts/connect_progress_card.dart';
+
 // ---------------------------------------------------------------------------
 // Temporary event badge — set to false to remove.
 // ---------------------------------------------------------------------------
@@ -34,8 +34,8 @@ enum _ConnectType {
   ble,
   serialCompanion,
   serialKiss,
-  webSerial,      // Web Serial API — MeshCore Companion framing
-  webSerialKiss,  // Web Serial API — KISS TNC framing
+  webSerial, // Web Serial API — MeshCore Companion framing
+  webSerialKiss, // Web Serial API — KISS TNC framing
 }
 
 class _ConnectTarget {
@@ -96,6 +96,7 @@ class _ConnectScreenState extends ConsumerState<ConnectScreen> {
   /// Kept separate from [_scanning] so the USB button can show its own
   /// spinner without disabling the BLE scan indicator.
   bool _usbScanning = false;
+  bool _showOtherRecentsExpanded = false;
 
   final List<_ConnectTarget> _targets = [];
   StreamSubscription<RadioDevice>? _bleScanSub;
@@ -119,9 +120,10 @@ class _ConnectScreenState extends ConsumerState<ConnectScreen> {
       // On Windows, flutter_blue_plus has no platform registration —
       // use WinBleBridge.adapterState (FlutterBluePlusWindows / WinRT).
       // On Android/iOS use the standard flutter_blue_plus stream.
-      final adapterStateStream = Platform.isWindows
-          ? WinBleBridge.adapterState
-          : FlutterBluePlus.adapterState;
+      final adapterStateStream =
+          Platform.isWindows
+              ? WinBleBridge.adapterState
+              : FlutterBluePlus.adapterState;
       _bleStateSub = adapterStateStream.listen((state) {
         if (state == BluetoothAdapterState.off) {
           _bleStateSub?.cancel();
@@ -217,9 +219,10 @@ class _ConnectScreenState extends ConsumerState<ConnectScreen> {
     }
     // On Windows, use the cached state from WinBleBridge (WinRT adapter).
     // On Android/iOS use the standard flutter_blue_plus sync getter.
-    final currentState = Platform.isWindows
-        ? WinBleBridge.adapterStateNow
-        : FlutterBluePlus.adapterStateNow;
+    final currentState =
+        Platform.isWindows
+            ? WinBleBridge.adapterStateNow
+            : FlutterBluePlus.adapterStateNow;
     if (currentState == BluetoothAdapterState.off) {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
@@ -244,6 +247,7 @@ class _ConnectScreenState extends ConsumerState<ConnectScreen> {
 
     setState(() {
       _scanning = true;
+      _showOtherRecentsExpanded = false;
       _targets.clear();
     });
 
@@ -271,17 +275,26 @@ class _ConnectScreenState extends ConsumerState<ConnectScreen> {
     // Without these, startScan silently returns no results on Android 6+.
     // Platform.isAndroid must not be called on web (dart:io throws there).
     if (Platform.isAndroid) {
-      final statuses =
+      // Request Bluetooth permissions. On Android 12+ (API 31+) the manifest
+      // declares BLUETOOTH_SCAN with neverForLocation, so location is NOT
+      // required for BLE scanning. On Android 11 and below, location IS
+      // required — we request it for those devices but do not hard-block on
+      // denial, since we can't know the API level without device_info_plus.
+      final btStatuses =
           await [
             Permission.bluetoothScan,
             Permission.bluetoothConnect,
-            Permission.location,
           ].request();
 
-      final denied = statuses.values.any(
+      // Also request location — required on Android ≤ 11 for BLE scan.
+      // Don't abort if only location is denied: on Android 12+ with
+      // neverForLocation the OS doesn't enforce it, so the scan still works.
+      final locationStatus = await Permission.location.request();
+
+      final btDenied = btStatuses.values.any(
         (s) => s.isDenied || s.isPermanentlyDenied,
       );
-      if (denied) {
+      if (btDenied) {
         if (mounted) {
           setState(() => _scanning = false);
           ScaffoldMessenger.of(context).showSnackBar(
@@ -298,6 +311,19 @@ class _ConnectScreenState extends ConsumerState<ConnectScreen> {
         }
         return;
       }
+
+      if (locationStatus.isDenied || locationStatus.isPermanentlyDenied) {
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(
+              content: Text(
+                'Localização negada. Em Android 11 ou inferior, o scan BLE pode não devolver dispositivos.',
+              ),
+              duration: Duration(seconds: 4),
+            ),
+          );
+        }
+      }
     }
 
     // BLE scan — one entry per device, but the stream may re-emit a device
@@ -311,8 +337,7 @@ class _ConnectScreenState extends ConsumerState<ConnectScreen> {
         if (mounted) {
           setState(() {
             final idx = _targets.indexWhere(
-              (t) =>
-                  t.type == _ConnectType.ble && t.device.id == device.id,
+              (t) => t.type == _ConnectType.ble && t.device.id == device.id,
             );
             final target = _ConnectTarget(
               device: device,
@@ -464,9 +489,7 @@ class _ConnectScreenState extends ConsumerState<ConnectScreen> {
             children: [
               const Icon(Icons.cable, color: Colors.white),
               const SizedBox(width: 12),
-              Expanded(
-                child: Text(context.l10n.connectWebUsbExpiredMessage),
-              ),
+              Expanded(child: Text(context.l10n.connectWebUsbExpiredMessage)),
             ],
           ),
           // Action button takes the user straight to the USB port-picker.
@@ -489,9 +512,9 @@ class _ConnectScreenState extends ConsumerState<ConnectScreen> {
               last.type == 'ble' ? RadioDeviceType.ble : RadioDeviceType.serial,
         ),
         // Map the persisted type string back to a _ConnectType enum value.
-      // Web Serial variants are kept separate from native serial so the
-      // reconnect button calls the correct notifier entry point.
-      type:
+        // Web Serial variants are kept separate from native serial so the
+        // reconnect button calls the correct notifier entry point.
+        type:
             last.type == 'ble'
                 ? _ConnectType.ble
                 : last.type == 'serialKiss'
@@ -644,15 +667,12 @@ class _ConnectScreenState extends ConsumerState<ConnectScreen> {
             )
             .firstOrNull
             ?.name;
-    final displayName =
-        (savedName != null) ? savedName : target.device.name;
+    final displayName = (savedName != null) ? savedName : target.device.name;
 
     // Subtitle: MAC address + signal strength to distinguish radios.
     final rssi = target.device.rssi;
     final subtitle =
-        rssi != null
-            ? '${target.device.id} · $rssi dBm'
-            : target.device.id;
+        rssi != null ? '${target.device.id} · $rssi dBm' : target.device.id;
 
     return Card(
       child: ListTile(
@@ -677,10 +697,7 @@ class _ConnectScreenState extends ConsumerState<ConnectScreen> {
       child: ListTile(
         leading: CircleAvatar(
           backgroundColor: theme.colorScheme.primaryContainer,
-          child: Icon(
-            target.icon,
-            color: theme.colorScheme.onPrimaryContainer,
-          ),
+          child: Icon(target.icon, color: theme.colorScheme.onPrimaryContainer),
         ),
         title: Text(target.device.name),
         subtitle: Text(target.typeLabel, style: theme.textTheme.bodySmall),
@@ -696,6 +713,7 @@ class _ConnectScreenState extends ConsumerState<ConnectScreen> {
     final stepLabel = ref.watch(connectionStepProvider);
     final stepIndex = ref.watch(connectionProgressProvider);
     final theme = Theme.of(context);
+    final showScanAreaExpanded = _scanning || _targets.isNotEmpty;
 
     // Total steps: 0=connecting transport, 1=waiting, 2=device info,
     // 3=contacts, 4=channels, 5=done.
@@ -707,7 +725,7 @@ class _ConnectScreenState extends ConsumerState<ConnectScreen> {
           padding: const EdgeInsets.all(24),
           child: Column(
             children: [
-              const SizedBox(height: 48),
+              SizedBox(height: showScanAreaExpanded ? 20 : 48),
               Stack(
                 clipBehavior: Clip.none,
                 children: [
@@ -757,7 +775,7 @@ class _ConnectScreenState extends ConsumerState<ConnectScreen> {
                   color: theme.colorScheme.onSurface.withAlpha(180),
                 ),
               ),
-              const SizedBox(height: 48),
+              SizedBox(height: showScanAreaExpanded ? 20 : 48),
 
               if (state == TransportState.connecting)
                 _ConnectingCard(
@@ -844,78 +862,94 @@ class _ConnectScreenState extends ConsumerState<ConnectScreen> {
                         // Additional recent radios.
                         if (others.isNotEmpty) ...[
                           Padding(
-                            padding: const EdgeInsets.only(
-                              left: 4,
-                              top: 4,
-                              bottom: 4,
-                            ),
-                            child: Text(
-                              'OUTROS RÁDIOS',
-                              style: theme.textTheme.labelSmall?.copyWith(
-                                color: theme.colorScheme.onSurface.withAlpha(
-                                  120,
+                            padding: const EdgeInsets.only(bottom: 6),
+                            child: Card(
+                              child: ListTile(
+                                dense: true,
+                                leading: Icon(
+                                  Icons.history,
+                                  color: theme.colorScheme.primary,
                                 ),
-                                letterSpacing: 1.2,
-                              ),
-                            ),
-                          ),
-                          ...others.map(
-                            (d) => Padding(
-                              padding: const EdgeInsets.only(bottom: 6),
-                              child: Card(
-                                child: ListTile(
-                                  leading: CircleAvatar(
-                                    backgroundColor:
-                                        theme
-                                            .colorScheme
-                                            .surfaceContainerHighest,
-                                    child: Icon(
-                                      d.type == 'ble'
-                                          ? Icons.bluetooth
-                                          // cable icon for Web Serial;
-                                          // usb icon for native serial.
-                                          : (d.type == 'webSerial' ||
-                                                  d.type == 'webSerialKiss')
-                                          ? Icons.cable
-                                          : Icons.usb,
+                                title: Text(
+                                  'OUTROS RÁDIOS (${others.length})',
+                                  style: theme.textTheme.labelLarge,
+                                ),
+                                trailing: Icon(
+                                  _showOtherRecentsExpanded
+                                      ? Icons.expand_less
+                                      : Icons.expand_more,
+                                ),
+                                onTap:
+                                    () => setState(
+                                      () =>
+                                          _showOtherRecentsExpanded =
+                                              !_showOtherRecentsExpanded,
                                     ),
-                                  ),
-                                  title: Text(d.name),
-                                  subtitle: Text(
-                                    d.type == 'ble'
-                                        ? 'Bluetooth LE'
-                                        : d.type == 'serialKiss'
-                                        ? 'KISS TNC'
-                                        : d.type == 'webSerial'
-                                        ? 'Web USB — Companion'
-                                        : d.type == 'webSerialKiss'
-                                        ? 'Web USB — KISS TNC'
-                                        : 'Série USB',
-                                    style: theme.textTheme.bodySmall,
-                                  ),
-                                  trailing: Row(
-                                    mainAxisSize: MainAxisSize.min,
-                                    children: [
-                                      const Icon(
-                                        Icons.arrow_forward_ios,
-                                        size: 16,
-                                      ),
-                                      const SizedBox(width: 4),
-                                      IconButton(
-                                        icon: const Icon(Icons.close, size: 16),
-                                        onPressed: () => _removeRecentDevice(d),
-                                        padding: EdgeInsets.zero,
-                                        constraints: const BoxConstraints(),
-                                        visualDensity: VisualDensity.compact,
-                                        tooltip: 'Remover da lista',
-                                      ),
-                                    ],
-                                  ),
-                                  onTap: () => _connectToLastDevice(d),
-                                ),
                               ),
                             ),
                           ),
+                          if (_showOtherRecentsExpanded)
+                            ...others.map(
+                              (d) => Padding(
+                                padding: const EdgeInsets.only(bottom: 6),
+                                child: Card(
+                                  child: ListTile(
+                                    leading: CircleAvatar(
+                                      backgroundColor:
+                                          theme
+                                              .colorScheme
+                                              .surfaceContainerHighest,
+                                      child: Icon(
+                                        d.type == 'ble'
+                                            ? Icons.bluetooth
+                                            // cable icon for Web Serial;
+                                            // usb icon for native serial.
+                                            : (d.type == 'webSerial' ||
+                                                d.type == 'webSerialKiss')
+                                            ? Icons.cable
+                                            : Icons.usb,
+                                      ),
+                                    ),
+                                    title: Text(d.name),
+                                    subtitle: Text(
+                                      d.type == 'ble'
+                                          ? 'Bluetooth LE'
+                                          : d.type == 'serialKiss'
+                                          ? 'KISS TNC'
+                                          : d.type == 'webSerial'
+                                          ? 'Web USB — Companion'
+                                          : d.type == 'webSerialKiss'
+                                          ? 'Web USB — KISS TNC'
+                                          : 'Série USB',
+                                      style: theme.textTheme.bodySmall,
+                                    ),
+                                    trailing: Row(
+                                      mainAxisSize: MainAxisSize.min,
+                                      children: [
+                                        const Icon(
+                                          Icons.arrow_forward_ios,
+                                          size: 16,
+                                        ),
+                                        const SizedBox(width: 4),
+                                        IconButton(
+                                          icon: const Icon(
+                                            Icons.close,
+                                            size: 16,
+                                          ),
+                                          onPressed:
+                                              () => _removeRecentDevice(d),
+                                          padding: EdgeInsets.zero,
+                                          constraints: const BoxConstraints(),
+                                          visualDensity: VisualDensity.compact,
+                                          tooltip: 'Remover da lista',
+                                        ),
+                                      ],
+                                    ),
+                                    onTap: () => _connectToLastDevice(d),
+                                  ),
+                                ),
+                              ),
+                            ),
                         ],
                         Padding(
                           padding: const EdgeInsets.only(top: 4, bottom: 8),
@@ -933,8 +967,7 @@ class _ConnectScreenState extends ConsumerState<ConnectScreen> {
                 FilledButton.icon(
                   // Disabled while either scan is in progress — only one
                   // browser picker can be open at a time.
-                  onPressed:
-                      (_scanning || _usbScanning) ? null : _startScan,
+                  onPressed: (_scanning || _usbScanning) ? null : _startScan,
                   icon:
                       _scanning
                           ? const SizedBox(
@@ -987,7 +1020,7 @@ class _ConnectScreenState extends ConsumerState<ConnectScreen> {
                     ),
                   ),
                 ],
-                const SizedBox(height: 24),
+                SizedBox(height: showScanAreaExpanded ? 8 : 24),
 
                 Expanded(
                   child:
@@ -1051,4 +1084,3 @@ class _ConnectScreenState extends ConsumerState<ConnectScreen> {
     );
   }
 }
-
