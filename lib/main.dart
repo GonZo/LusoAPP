@@ -8,11 +8,12 @@ import 'providers/radio_providers.dart';
 import 'providers/canned_messages_provider.dart';
 import 'providers/gps_sharing_provider.dart';
 import 'providers/map_visibility_provider.dart';
-import 'protocol/protocol.dart' show ChatMessage;
+import 'providers/sos_settings_provider.dart';
 import 'services/gps_sharing_service.dart';
 import 'transport/radio_transport.dart' show TransportState;
 import 'services/notification_service.dart';
 import 'services/plan333_service.dart';
+import 'services/sos_service.dart';
 import 'services/storage_service.dart';
 import 'services/widget_service.dart';
 import 'l10n/l10n.dart';
@@ -121,6 +122,9 @@ class _McAppPtState extends ConsumerState<McAppPt> {
       await ref.read(qslLogProvider.notifier).loadFromStorage();
       await ref.read(cannedMessagesProvider.notifier).loadFromStorage();
       await ref.read(gpsSharingProvider.notifier).loadFromStorage();
+
+      // Restore SOS destination/template settings.
+      await ref.read(sosSettingsProvider.notifier).loadFromStorage();
       await ref.read(mapHiddenContactsProvider.notifier).loadFromStorage();
       // Eagerly initialize the auto-send notifier (starts background timer).
       ref.read(plan333AutoSendProvider);
@@ -186,59 +190,65 @@ class _McAppPtState extends ConsumerState<McAppPt> {
           router.go('/connect');
         }
       case WidgetAction.sendEmergency:
-        final svc = ref.read(radioServiceProvider);
-        final connected =
-            ref.read(connectionProvider) == TransportState.connected;
         final messenger = ScaffoldMessenger.maybeOf(context);
         final emergency = ref.read(cannedMessagesProvider.notifier).emergency;
-        if (emergency == null) {
-          messenger?.showSnackBar(
-            const SnackBar(
-              content: Text(
-                '🆘 Sem mensagem de emergência configurada — abre Definições',
-              ),
-              duration: Duration(seconds: 3),
-            ),
-          );
-          router.go('/settings');
-          break;
-        }
-        if (svc == null || !connected) {
-          messenger?.showSnackBar(
-            const SnackBar(
-              content: Text('Rádio desligado — liga para enviar SOS'),
-              duration: Duration(seconds: 3),
-            ),
-          );
-          router.go('/connect');
-          break;
-        }
-        final ts = DateTime.now().millisecondsSinceEpoch ~/ 1000;
-        ref
-            .read(messagesProvider.notifier)
-            .addOutgoing(
-              ChatMessage(
-                text: emergency.text,
-                timestamp: ts,
-                isOutgoing: true,
-                channelIndex: 0,
-              ),
-            );
-        svc.sendChannelMessage(0, emergency.text, timestamp: ts);
-        messenger?.showSnackBar(
-          SnackBar(
-            backgroundColor: const Color(0xFFD32F2F),
-            content: Text(
-              '🆘 Emergência enviada: ${emergency.text}',
-              style: const TextStyle(
-                color: Colors.white,
-                fontWeight: FontWeight.bold,
-              ),
-            ),
-            duration: const Duration(seconds: 4),
-          ),
-        );
-        router.go('/channels');
+        final base = emergency?.text;
+        final result = ref
+            .read(sosServiceProvider)
+            .sendConfiguredSos(baseTextOverride: base);
+
+        result.then((r) {
+          if (!mounted) return;
+          switch (r.outcome) {
+            case SosSendOutcome.sent:
+              messenger?.showSnackBar(
+                const SnackBar(
+                  backgroundColor: Color(0xFFD32F2F),
+                  content: Text(
+                    '🆘 SOS enviado',
+                    style: TextStyle(
+                      color: Colors.white,
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
+                  duration: Duration(seconds: 4),
+                ),
+              );
+              router.go('/channels');
+            case SosSendOutcome.notConnected:
+              messenger?.showSnackBar(
+                const SnackBar(
+                  content: Text('Rádio desligado — liga para enviar SOS'),
+                  duration: Duration(seconds: 3),
+                ),
+              );
+              router.go('/connect');
+            case SosSendOutcome.missingContact:
+              messenger?.showSnackBar(
+                const SnackBar(
+                  content: Text(
+                    '🆘 Contacto SOS não configurado/encontrado — abre Definições',
+                  ),
+                  duration: Duration(seconds: 3),
+                ),
+              );
+              router.go('/settings');
+            case SosSendOutcome.permissionDenied:
+            case SosSendOutcome.locationDisabled:
+            case SosSendOutcome.failed:
+              messenger?.showSnackBar(
+                SnackBar(
+                  content: Text(
+                    r.detail?.isNotEmpty == true
+                        ? 'Falha ao enviar SOS: ${r.detail}'
+                        : 'Falha ao enviar SOS',
+                  ),
+                  duration: const Duration(seconds: 3),
+                ),
+              );
+              router.go('/settings');
+          }
+        });
     }
   }
 

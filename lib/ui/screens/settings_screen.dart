@@ -1,3 +1,5 @@
+import 'dart:convert';
+
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -11,14 +13,17 @@ import '../../protocol/protocol.dart';
 import '../../providers/canned_messages_provider.dart';
 import '../../providers/gps_sharing_provider.dart';
 import '../../providers/radio_providers.dart';
+import '../../providers/sos_settings_provider.dart';
 import '../../services/gps_sharing_service.dart';
 import '../../services/notification_service.dart';
+import '../../services/sos_service.dart';
 import '../../services/storage_service.dart';
 import '../../transport/radio_transport.dart';
 import '../theme.dart';
 
 part 'parts/settings_appearance.dart';
 part 'parts/settings_canned_messages.dart';
+part 'parts/settings_sos.dart';
 part 'parts/settings_gps_sharing.dart';
 part 'parts/settings_notifications.dart';
 part 'parts/settings_keybackup.dart';
@@ -225,6 +230,10 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
 
           // Canned messages
           const _CannedMessagesCard(),
+          const SizedBox(height: 16),
+
+          // SOS
+          const _SosSettingsCard(),
           const SizedBox(height: 16),
 
           // GPS sharing
