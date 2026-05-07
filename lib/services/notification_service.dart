@@ -228,12 +228,14 @@ class NotificationService {
   /// [channelIndex] — channel slot index; used as navigation payload.
   /// [senderName] — display name of the sender.
   /// [text] — message body.
+  /// [isMentioned] — true when the message text contains a mention of the user.
   Future<void> showChannelMessage({
     required String channelName,
     required String senderName,
     required String text,
     int? channelIndex,
     bool isAppInForeground = false,
+    bool isMentioned = false,
   }) async {
     if (!_shouldSend(
       categoryEnabled: _settings.channelMessages,
@@ -241,6 +243,7 @@ class NotificationService {
     )) {
       return;
     }
+    if (_settings.channelMentionsOnly && !isMentioned) return;
 
     await _show(
       title: channelName,

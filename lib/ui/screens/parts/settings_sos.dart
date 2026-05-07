@@ -39,7 +39,10 @@ class _SosSettingsCardState extends ConsumerState<_SosSettingsCard> {
     }
 
     String channelLabel(ChannelInfo c) {
-      final name = c.name.trim().isEmpty ? '(sem nome)' : c.name.trim();
+      final name =
+          c.name.trim().isEmpty
+              ? context.l10n.settingsSosUnnamedChannel
+              : c.name.trim();
       return '#${c.index} $name';
     }
 
@@ -71,7 +74,7 @@ class _SosSettingsCardState extends ConsumerState<_SosSettingsCard> {
             ),
             const SizedBox(height: 8),
             Text(
-              'Configura o destino e a mensagem de emergência. Usa {gps} no texto para inserir coordenadas.',
+              context.l10n.settingsSosDesc('{gps}'),
               style: theme.textTheme.bodySmall?.copyWith(
                 color: theme.colorScheme.onSurfaceVariant,
               ),
@@ -80,18 +83,18 @@ class _SosSettingsCardState extends ConsumerState<_SosSettingsCard> {
             DropdownButtonFormField<SosTargetType>(
               key: ValueKey('sos_target_${settings.targetType.name}'),
               initialValue: settings.targetType,
-              decoration: const InputDecoration(
-                labelText: 'Destino SOS',
+              decoration: InputDecoration(
+                labelText: context.l10n.settingsSosTarget,
                 border: OutlineInputBorder(),
               ),
-              items: const [
+              items: [
                 DropdownMenuItem(
                   value: SosTargetType.channel,
-                  child: Text('Canal'),
+                  child: Text(context.l10n.settingsSosTargetChannel),
                 ),
                 DropdownMenuItem(
                   value: SosTargetType.contact,
-                  child: Text('Contacto privado'),
+                  child: Text(context.l10n.settingsSosTargetPrivateContact),
                 ),
               ],
               onChanged: (v) {
@@ -105,13 +108,16 @@ class _SosSettingsCardState extends ConsumerState<_SosSettingsCard> {
               DropdownButtonFormField<int>(
                 key: ValueKey('sos_channel_${settings.channelIndex}'),
                 initialValue: settings.channelIndex,
-                decoration: const InputDecoration(
-                  labelText: 'Canal de envio',
+                decoration: InputDecoration(
+                  labelText: context.l10n.settingsSosChannelLabel,
                   border: OutlineInputBorder(),
                 ),
                 items: [
                   if (channels.isEmpty)
-                    const DropdownMenuItem(value: 0, child: Text('#0 Geral')),
+                    DropdownMenuItem(
+                      value: 0,
+                      child: Text(context.l10n.settingsSosGeneralChannel),
+                    ),
                   ...channels.map(
                     (c) => DropdownMenuItem<int>(
                       value: c.index,
@@ -133,10 +139,10 @@ class _SosSettingsCardState extends ConsumerState<_SosSettingsCard> {
                         : () => _pickSosContact(context, contacts, settings),
                 borderRadius: BorderRadius.circular(8),
                 child: InputDecorator(
-                  decoration: const InputDecoration(
-                    labelText: 'Contacto de destino',
+                  decoration: InputDecoration(
+                    labelText: context.l10n.settingsSosDestinationContact,
                     border: OutlineInputBorder(),
-                    suffixIcon: Icon(Icons.search),
+                    suffixIcon: const Icon(Icons.search),
                   ),
                   child: Row(
                     children: [
@@ -144,15 +150,15 @@ class _SosSettingsCardState extends ConsumerState<_SosSettingsCard> {
                         child: Text(
                           selectedContact?.displayName ??
                               (contacts.isEmpty
-                                  ? 'Sem contactos disponíveis'
-                                  : 'Toque para procurar contacto'),
+                                  ? context.l10n.settingsSosNoContactsAvailable
+                                  : context.l10n.settingsSosTapToSearchContact),
                           maxLines: 1,
                           overflow: TextOverflow.ellipsis,
                         ),
                       ),
                       if (selectedContact != null)
                         IconButton(
-                          tooltip: 'Limpar contacto',
+                          tooltip: context.l10n.settingsSosClearContact,
                           icon: const Icon(Icons.close, size: 18),
                           onPressed:
                               () => ref
@@ -168,9 +174,9 @@ class _SosSettingsCardState extends ConsumerState<_SosSettingsCard> {
               controller: _templateCtrl,
               minLines: 2,
               maxLines: 4,
-              decoration: const InputDecoration(
-                labelText: 'Mensagem SOS',
-                hintText: 'Ex.: SOS - preciso de ajuda! {gps}',
+              decoration: InputDecoration(
+                labelText: context.l10n.settingsSosMessage,
+                hintText: context.l10n.settingsSosMessageHint('{gps}'),
                 border: OutlineInputBorder(),
               ),
               onChanged:
@@ -181,10 +187,8 @@ class _SosSettingsCardState extends ConsumerState<_SosSettingsCard> {
             const SizedBox(height: 8),
             SwitchListTile(
               contentPadding: EdgeInsets.zero,
-              title: const Text('Incluir coordenadas GPS do telemóvel'),
-              subtitle: const Text(
-                'Se não houver GPS/permissão, a mensagem é enviada sem coordenadas.',
-              ),
+              title: Text(context.l10n.settingsSosIncludeGps),
+              subtitle: Text(context.l10n.settingsSosIncludeGpsDesc),
               value: settings.includeGps,
               onChanged:
                   (v) =>
@@ -195,7 +199,7 @@ class _SosSettingsCardState extends ConsumerState<_SosSettingsCard> {
               alignment: Alignment.centerRight,
               child: FilledButton.icon(
                 icon: const Icon(Icons.sos),
-                label: const Text('Enviar SOS agora'),
+                label: Text(context.l10n.settingsSosSendNow),
                 onPressed: () async {
                   final result =
                       await ref.read(sosServiceProvider).sendConfiguredSos();
@@ -204,18 +208,20 @@ class _SosSettingsCardState extends ConsumerState<_SosSettingsCard> {
                   switch (result.outcome) {
                     case SosSendOutcome.sent:
                       messenger.showSnackBar(
-                        const SnackBar(content: Text('SOS enviado')),
+                        SnackBar(content: Text(context.l10n.settingsSosSent)),
                       );
                     case SosSendOutcome.notConnected:
                       messenger.showSnackBar(
-                        const SnackBar(content: Text('Rádio não ligado')),
+                        SnackBar(
+                          content: Text(
+                            context.l10n.settingsSosRadioNotConnected,
+                          ),
+                        ),
                       );
                     case SosSendOutcome.missingContact:
                       messenger.showSnackBar(
-                        const SnackBar(
-                          content: Text(
-                            'Contacto SOS não configurado/encontrado',
-                          ),
+                        SnackBar(
+                          content: Text(context.l10n.settingsSosMissingContact),
                         ),
                       );
                     case SosSendOutcome.permissionDenied:
@@ -225,8 +231,10 @@ class _SosSettingsCardState extends ConsumerState<_SosSettingsCard> {
                         SnackBar(
                           content: Text(
                             result.detail?.isNotEmpty == true
-                                ? 'Falha SOS: ${result.detail}'
-                                : 'Falha ao enviar SOS',
+                                ? context.l10n.settingsSosSendFailedDetail(
+                                  result.detail!,
+                                )
+                                : context.l10n.settingsSosSendFailed,
                           ),
                         ),
                       );
@@ -245,7 +253,6 @@ class _SosSettingsCardState extends ConsumerState<_SosSettingsCard> {
     List<Contact> contacts,
     SosSettings settings,
   ) async {
-    final searchCtrl = TextEditingController();
     String query = '';
 
     final result = await showDialog<String?>(
@@ -267,7 +274,7 @@ class _SosSettingsCardState extends ConsumerState<_SosSettingsCard> {
                   );
 
             return AlertDialog(
-              title: const Text('Procurar contacto SOS'),
+              title: Text(context.l10n.settingsSosSearchContact),
               content: SizedBox(
                 width: 420,
                 child: ConstrainedBox(
@@ -278,11 +285,10 @@ class _SosSettingsCardState extends ConsumerState<_SosSettingsCard> {
                     mainAxisSize: MainAxisSize.max,
                     children: [
                       TextField(
-                        controller: searchCtrl,
                         autofocus: true,
-                        decoration: const InputDecoration(
-                          prefixIcon: Icon(Icons.search),
-                          hintText: 'Nome ou ID curto',
+                        decoration: InputDecoration(
+                          prefixIcon: const Icon(Icons.search),
+                          hintText: context.l10n.settingsSosSearchHint,
                           border: OutlineInputBorder(),
                         ),
                         onChanged: (v) => setLocal(() => query = v),
@@ -291,8 +297,10 @@ class _SosSettingsCardState extends ConsumerState<_SosSettingsCard> {
                       Expanded(
                         child:
                             filtered.isEmpty
-                                ? const Center(
-                                  child: Text('Nenhum contacto encontrado'),
+                                ? Center(
+                                  child: Text(
+                                    context.l10n.settingsSosNoContactFound,
+                                  ),
                                 )
                                 : ListView.builder(
                                   itemCount: filtered.length,
@@ -321,11 +329,11 @@ class _SosSettingsCardState extends ConsumerState<_SosSettingsCard> {
               actions: [
                 TextButton(
                   onPressed: () => Navigator.of(ctx).pop('__clear__'),
-                  child: const Text('Limpar'),
+                  child: Text(context.l10n.commonClear),
                 ),
                 TextButton(
                   onPressed: () => Navigator.of(ctx).pop(null),
-                  child: const Text('Cancelar'),
+                  child: Text(context.l10n.commonCancel),
                 ),
               ],
             );
@@ -334,7 +342,6 @@ class _SosSettingsCardState extends ConsumerState<_SosSettingsCard> {
       },
     );
 
-    searchCtrl.dispose();
     if (!mounted) return;
     if (result == '__clear__') {
       await ref.read(sosSettingsProvider.notifier).setContactKey(null);

@@ -1174,17 +1174,191 @@ abstract class AppLocalizations {
   /// **'Mensagens privadas'**
   String get settingsPrivateMessages;
 
+  /// No description provided for @settingsPrivateMessagesDesc.
+  ///
+  /// In pt, this message translates to:
+  /// **'Notificar quando receber uma mensagem direta'**
+  String get settingsPrivateMessagesDesc;
+
   /// No description provided for @settingsChannelMessages.
   ///
   /// In pt, this message translates to:
   /// **'Mensagens de canal'**
   String get settingsChannelMessages;
 
+  /// No description provided for @settingsChannelMessagesDesc.
+  ///
+  /// In pt, this message translates to:
+  /// **'Notificar mensagens em canais'**
+  String get settingsChannelMessagesDesc;
+
+  /// No description provided for @settingsChannelMentionsOnly.
+  ///
+  /// In pt, this message translates to:
+  /// **'Apenas menções'**
+  String get settingsChannelMentionsOnly;
+
+  /// No description provided for @settingsChannelMentionsOnlyDesc.
+  ///
+  /// In pt, this message translates to:
+  /// **'Só notificar quando houver uma menção ao teu nome no canal'**
+  String get settingsChannelMentionsOnlyDesc;
+
   /// No description provided for @settingsBackgroundOnly.
   ///
   /// In pt, this message translates to:
   /// **'Apenas em segundo plano'**
   String get settingsBackgroundOnly;
+
+  /// No description provided for @settingsBackgroundOnlyDesc.
+  ///
+  /// In pt, this message translates to:
+  /// **'Só notificar quando a app não está em primeiro plano'**
+  String get settingsBackgroundOnlyDesc;
+
+  /// No description provided for @settingsSosDesc.
+  ///
+  /// In pt, this message translates to:
+  /// **'Configura o destino e a mensagem de emergência. Usa \'{gps}\' no texto para inserir coordenadas.'**
+  String settingsSosDesc(Object gps);
+
+  /// No description provided for @settingsSosTarget.
+  ///
+  /// In pt, this message translates to:
+  /// **'Destino SOS'**
+  String get settingsSosTarget;
+
+  /// No description provided for @settingsSosTargetChannel.
+  ///
+  /// In pt, this message translates to:
+  /// **'Canal'**
+  String get settingsSosTargetChannel;
+
+  /// No description provided for @settingsSosTargetPrivateContact.
+  ///
+  /// In pt, this message translates to:
+  /// **'Contacto privado'**
+  String get settingsSosTargetPrivateContact;
+
+  /// No description provided for @settingsSosChannelLabel.
+  ///
+  /// In pt, this message translates to:
+  /// **'Canal de envio'**
+  String get settingsSosChannelLabel;
+
+  /// No description provided for @settingsSosGeneralChannel.
+  ///
+  /// In pt, this message translates to:
+  /// **'#0 Geral'**
+  String get settingsSosGeneralChannel;
+
+  /// No description provided for @settingsSosDestinationContact.
+  ///
+  /// In pt, this message translates to:
+  /// **'Contacto de destino'**
+  String get settingsSosDestinationContact;
+
+  /// No description provided for @settingsSosNoContactsAvailable.
+  ///
+  /// In pt, this message translates to:
+  /// **'Sem contactos disponíveis'**
+  String get settingsSosNoContactsAvailable;
+
+  /// No description provided for @settingsSosTapToSearchContact.
+  ///
+  /// In pt, this message translates to:
+  /// **'Toque para procurar contacto'**
+  String get settingsSosTapToSearchContact;
+
+  /// No description provided for @settingsSosClearContact.
+  ///
+  /// In pt, this message translates to:
+  /// **'Limpar contacto'**
+  String get settingsSosClearContact;
+
+  /// No description provided for @settingsSosMessage.
+  ///
+  /// In pt, this message translates to:
+  /// **'Mensagem SOS'**
+  String get settingsSosMessage;
+
+  /// No description provided for @settingsSosMessageHint.
+  ///
+  /// In pt, this message translates to:
+  /// **'Ex.: SOS - preciso de ajuda! \'{gps}\''**
+  String settingsSosMessageHint(Object gps);
+
+  /// No description provided for @settingsSosIncludeGps.
+  ///
+  /// In pt, this message translates to:
+  /// **'Incluir coordenadas GPS do telemóvel'**
+  String get settingsSosIncludeGps;
+
+  /// No description provided for @settingsSosIncludeGpsDesc.
+  ///
+  /// In pt, this message translates to:
+  /// **'Se não houver GPS/permissão, a mensagem é enviada sem coordenadas.'**
+  String get settingsSosIncludeGpsDesc;
+
+  /// No description provided for @settingsSosSendNow.
+  ///
+  /// In pt, this message translates to:
+  /// **'Enviar SOS agora'**
+  String get settingsSosSendNow;
+
+  /// No description provided for @settingsSosSent.
+  ///
+  /// In pt, this message translates to:
+  /// **'SOS enviado'**
+  String get settingsSosSent;
+
+  /// No description provided for @settingsSosRadioNotConnected.
+  ///
+  /// In pt, this message translates to:
+  /// **'Rádio não ligado'**
+  String get settingsSosRadioNotConnected;
+
+  /// No description provided for @settingsSosMissingContact.
+  ///
+  /// In pt, this message translates to:
+  /// **'Contacto SOS não configurado/encontrado'**
+  String get settingsSosMissingContact;
+
+  /// No description provided for @settingsSosSendFailed.
+  ///
+  /// In pt, this message translates to:
+  /// **'Falha ao enviar SOS'**
+  String get settingsSosSendFailed;
+
+  /// No description provided for @settingsSosSendFailedDetail.
+  ///
+  /// In pt, this message translates to:
+  /// **'Falha SOS: {detail}'**
+  String settingsSosSendFailedDetail(Object detail);
+
+  /// No description provided for @settingsSosSearchContact.
+  ///
+  /// In pt, this message translates to:
+  /// **'Procurar contacto SOS'**
+  String get settingsSosSearchContact;
+
+  /// No description provided for @settingsSosSearchHint.
+  ///
+  /// In pt, this message translates to:
+  /// **'Nome ou ID curto'**
+  String get settingsSosSearchHint;
+
+  /// No description provided for @settingsSosNoContactFound.
+  ///
+  /// In pt, this message translates to:
+  /// **'Nenhum contacto encontrado'**
+  String get settingsSosNoContactFound;
+
+  /// No description provided for @settingsSosUnnamedChannel.
+  ///
+  /// In pt, this message translates to:
+  /// **'(sem nome)'**
+  String get settingsSosUnnamedChannel;
 
   /// No description provided for @settingsPrivateKeyCopy.
   ///
@@ -2991,6 +3165,42 @@ abstract class AppLocalizations {
   /// In pt, this message translates to:
   /// **'Final:'**
   String get mapFinal;
+
+  /// No description provided for @mapLegendTitle.
+  ///
+  /// In pt, this message translates to:
+  /// **'Legenda'**
+  String get mapLegendTitle;
+
+  /// No description provided for @mapLegendCompanion.
+  ///
+  /// In pt, this message translates to:
+  /// **'Companheiro'**
+  String get mapLegendCompanion;
+
+  /// No description provided for @mapLegendRepeater.
+  ///
+  /// In pt, this message translates to:
+  /// **'Repetidor'**
+  String get mapLegendRepeater;
+
+  /// No description provided for @mapLegendRoom.
+  ///
+  /// In pt, this message translates to:
+  /// **'Sala'**
+  String get mapLegendRoom;
+
+  /// No description provided for @mapLegendSensor.
+  ///
+  /// In pt, this message translates to:
+  /// **'Sensor'**
+  String get mapLegendSensor;
+
+  /// No description provided for @mapLegendYou.
+  ///
+  /// In pt, this message translates to:
+  /// **'Tu'**
+  String get mapLegendYou;
 
   /// No description provided for @mapAttribution.
   ///

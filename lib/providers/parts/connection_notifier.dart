@@ -739,12 +739,19 @@ class ConnectionNotifier extends StateNotifier<TransportState> {
                   notifBody = message.text;
                 }
               }
+              final selfName = _ref.read(selfInfoProvider)?.name ?? '';
+              final isMentioned =
+                  selfName.isNotEmpty &&
+                  message.text.toLowerCase().contains(
+                    '@[${selfName.toLowerCase()}]',
+                  );
               NotificationService.instance.showChannelMessage(
                 channelName: channelName,
                 senderName: notifSender,
                 text: notifBody,
                 channelIndex: idx,
                 isAppInForeground: AppLifecycleObserver.isInForeground,
+                isMentioned: isMentioned,
               );
             }
           }

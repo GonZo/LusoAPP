@@ -556,12 +556,14 @@ class NotificationSettings {
         privateMessages: (json['private_messages'] as bool?) ?? true,
         channelMessages: (json['channel_messages'] as bool?) ?? true,
         onlyWhenBackground: (json['only_when_background'] as bool?) ?? false,
+        channelMentionsOnly: (json['channel_mentions_only'] as bool?) ?? false,
       );
   const NotificationSettings({
     this.enabled = true,
     this.privateMessages = true,
     this.channelMessages = true,
     this.onlyWhenBackground = false,
+    this.channelMentionsOnly = false,
   });
 
   /// Master switch — disables all notifications when false.
@@ -576,17 +578,22 @@ class NotificationSettings {
   /// Only fire notifications when the app is in the background.
   final bool onlyWhenBackground;
 
+  /// When true, only notify for channel messages that mention the user.
+  final bool channelMentionsOnly;
+
   NotificationSettings copyWith({
     bool? enabled,
     bool? privateMessages,
     bool? channelMessages,
     bool? onlyWhenBackground,
+    bool? channelMentionsOnly,
   }) {
     return NotificationSettings(
       enabled: enabled ?? this.enabled,
       privateMessages: privateMessages ?? this.privateMessages,
       channelMessages: channelMessages ?? this.channelMessages,
       onlyWhenBackground: onlyWhenBackground ?? this.onlyWhenBackground,
+      channelMentionsOnly: channelMentionsOnly ?? this.channelMentionsOnly,
     );
   }
 
@@ -595,6 +602,7 @@ class NotificationSettings {
     'private_messages': privateMessages,
     'channel_messages': channelMessages,
     'only_when_background': onlyWhenBackground,
+    'channel_mentions_only': channelMentionsOnly,
   };
 }
 

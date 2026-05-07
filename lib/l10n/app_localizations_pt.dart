@@ -579,10 +579,108 @@ class AppLocalizationsPt extends AppLocalizations {
   String get settingsPrivateMessages => 'Mensagens privadas';
 
   @override
+  String get settingsPrivateMessagesDesc =>
+      'Notificar quando receber uma mensagem direta';
+
+  @override
   String get settingsChannelMessages => 'Mensagens de canal';
 
   @override
+  String get settingsChannelMessagesDesc => 'Notificar mensagens em canais';
+
+  @override
+  String get settingsChannelMentionsOnly => 'Apenas menções';
+
+  @override
+  String get settingsChannelMentionsOnlyDesc =>
+      'Só notificar quando houver uma menção ao teu nome no canal';
+
+  @override
   String get settingsBackgroundOnly => 'Apenas em segundo plano';
+
+  @override
+  String get settingsBackgroundOnlyDesc =>
+      'Só notificar quando a app não está em primeiro plano';
+
+  @override
+  String settingsSosDesc(Object gps) {
+    return 'Configura o destino e a mensagem de emergência. Usa \'$gps\' no texto para inserir coordenadas.';
+  }
+
+  @override
+  String get settingsSosTarget => 'Destino SOS';
+
+  @override
+  String get settingsSosTargetChannel => 'Canal';
+
+  @override
+  String get settingsSosTargetPrivateContact => 'Contacto privado';
+
+  @override
+  String get settingsSosChannelLabel => 'Canal de envio';
+
+  @override
+  String get settingsSosGeneralChannel => '#0 Geral';
+
+  @override
+  String get settingsSosDestinationContact => 'Contacto de destino';
+
+  @override
+  String get settingsSosNoContactsAvailable => 'Sem contactos disponíveis';
+
+  @override
+  String get settingsSosTapToSearchContact => 'Toque para procurar contacto';
+
+  @override
+  String get settingsSosClearContact => 'Limpar contacto';
+
+  @override
+  String get settingsSosMessage => 'Mensagem SOS';
+
+  @override
+  String settingsSosMessageHint(Object gps) {
+    return 'Ex.: SOS - preciso de ajuda! \'$gps\'';
+  }
+
+  @override
+  String get settingsSosIncludeGps => 'Incluir coordenadas GPS do telemóvel';
+
+  @override
+  String get settingsSosIncludeGpsDesc =>
+      'Se não houver GPS/permissão, a mensagem é enviada sem coordenadas.';
+
+  @override
+  String get settingsSosSendNow => 'Enviar SOS agora';
+
+  @override
+  String get settingsSosSent => 'SOS enviado';
+
+  @override
+  String get settingsSosRadioNotConnected => 'Rádio não ligado';
+
+  @override
+  String get settingsSosMissingContact =>
+      'Contacto SOS não configurado/encontrado';
+
+  @override
+  String get settingsSosSendFailed => 'Falha ao enviar SOS';
+
+  @override
+  String settingsSosSendFailedDetail(Object detail) {
+    return 'Falha SOS: $detail';
+  }
+
+  @override
+  String get settingsSosSearchContact => 'Procurar contacto SOS';
+
+  @override
+  String get settingsSosSearchHint => 'Nome ou ID curto';
+
+  @override
+  String get settingsSosNoContactFound => 'Nenhum contacto encontrado';
+
+  @override
+  String get settingsSosUnnamedChannel => '(sem nome)';
 
   @override
   String get settingsPrivateKeyCopy => 'Cópia da Chave Privada';
@@ -1546,6 +1644,24 @@ class AppLocalizationsPt extends AppLocalizations {
 
   @override
   String get mapFinal => 'Final:';
+
+  @override
+  String get mapLegendTitle => 'Legenda';
+
+  @override
+  String get mapLegendCompanion => 'Companheiro';
+
+  @override
+  String get mapLegendRepeater => 'Repetidor';
+
+  @override
+  String get mapLegendRoom => 'Sala';
+
+  @override
+  String get mapLegendSensor => 'Sensor';
+
+  @override
+  String get mapLegendYou => 'Tu';
 
   @override
   String get mapAttribution => 'MeshCore Portugal';

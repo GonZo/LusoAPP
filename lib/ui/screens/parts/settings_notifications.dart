@@ -93,9 +93,7 @@ class _NotificationsCardState extends ConsumerState<_NotificationsCard> {
             // Sub-toggles — only enabled when master is on
             SwitchListTile(
               title: Text(context.l10n.settingsPrivateMessages),
-              subtitle: const Text(
-                'Notificar quando receber uma mensagem direta',
-              ),
+              subtitle: Text(context.l10n.settingsPrivateMessagesDesc),
               value: settings.enabled && settings.privateMessages,
               onChanged:
                   settings.enabled
@@ -105,7 +103,7 @@ class _NotificationsCardState extends ConsumerState<_NotificationsCard> {
             ),
             SwitchListTile(
               title: Text(context.l10n.settingsChannelMessages),
-              subtitle: const Text('Notificar mensagens em canais'),
+              subtitle: Text(context.l10n.settingsChannelMessagesDesc),
               value: settings.enabled && settings.channelMessages,
               onChanged:
                   settings.enabled
@@ -113,11 +111,20 @@ class _NotificationsCardState extends ConsumerState<_NotificationsCard> {
                           notifier.update(settings.copyWith(channelMessages: v))
                       : null,
             ),
+            if (settings.enabled && settings.channelMessages)
+              SwitchListTile(
+                title: Text(context.l10n.settingsChannelMentionsOnly),
+                subtitle: Text(context.l10n.settingsChannelMentionsOnlyDesc),
+                value: settings.channelMentionsOnly,
+                contentPadding: const EdgeInsets.only(left: 32, right: 16),
+                onChanged:
+                    (v) => notifier.update(
+                      settings.copyWith(channelMentionsOnly: v),
+                    ),
+              ),
             SwitchListTile(
               title: Text(context.l10n.settingsBackgroundOnly),
-              subtitle: const Text(
-                'Só notificar quando a app não está em primeiro plano',
-              ),
+              subtitle: Text(context.l10n.settingsBackgroundOnlyDesc),
               value: settings.onlyWhenBackground,
               onChanged:
                   settings.enabled

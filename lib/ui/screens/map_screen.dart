@@ -361,8 +361,8 @@ class _MapScreenState extends ConsumerState<MapScreen> {
                           if (cluster.isSingle)
                             Marker(
                               point: cluster.center,
-                              width: 44,
-                              height: 44,
+                              width: 84,
+                              height: 64,
                               child: GestureDetector(
                                 onTap:
                                     () => _showContactSheet(
@@ -377,8 +377,8 @@ class _MapScreenState extends ConsumerState<MapScreen> {
                           else
                             Marker(
                               point: cluster.center,
-                              width: 52,
-                              height: 52,
+                              width: 42,
+                              height: 42,
                               child: GestureDetector(
                                 onTap: () => _onClusterTap(cluster),
                                 child: _buildClusterMarker(cluster, theme),
@@ -387,9 +387,9 @@ class _MapScreenState extends ConsumerState<MapScreen> {
                       if (selfPos != null)
                         Marker(
                           point: selfPos,
-                          width: 44,
-                          height: 44,
-                          child: _buildSelfMarker(theme),
+                          width: 84,
+                          height: 64,
+                          child: _buildSelfMarker(theme, selfInfo?.name),
                         ),
                     ],
                   ),
@@ -404,8 +404,8 @@ class _MapScreenState extends ConsumerState<MapScreen> {
                                 traceResult.hops[hi].latitude!,
                                 traceResult.hops[hi].longitude!,
                               ),
-                              width: 140,
-                              height: 130,
+                              width: 126,
+                              height: 118,
                               alignment: Alignment.center,
                               child: _buildHopMarker(
                                 traceResult.hops[hi],
@@ -702,8 +702,8 @@ class _MapScreenState extends ConsumerState<MapScreen> {
         Container(width: 2, height: 8, color: theme.colorScheme.primary),
         // Repeater icon circle — CENTER is at the LatLng geographic point
         Container(
-          width: 36,
-          height: 36,
+          width: 30,
+          height: 30,
           decoration: BoxDecoration(
             color: Colors.orange.shade700,
             shape: BoxShape.circle,
@@ -717,12 +717,12 @@ class _MapScreenState extends ConsumerState<MapScreen> {
             ],
           ),
           child: const Center(
-            child: Icon(Icons.cell_tower, color: Colors.white, size: 20),
+            child: Icon(Icons.cell_tower, color: Colors.white, size: 16),
           ),
         ),
         // Balancing spacer = label + dist-pill + connector height above icon
         // so the icon center lands at the widget midpoint = LatLng anchor.
-        const SizedBox(height: 40),
+        const SizedBox(height: 34),
       ],
     );
   }
@@ -732,43 +732,101 @@ class _MapScreenState extends ConsumerState<MapScreen> {
   // ---------------------------------------------------------------------------
 
   Widget _buildContactMarker(Contact contact, ThemeData theme) {
-    return Container(
-      decoration: BoxDecoration(
-        color: _contactColor(contact),
-        shape: BoxShape.circle,
-        boxShadow: const [
-          BoxShadow(
-            color: Color(0x50000000),
-            blurRadius: 4,
-            offset: Offset(0, 2),
+    return Stack(
+      clipBehavior: Clip.none,
+      alignment: Alignment.center,
+      children: [
+        Container(
+          width: 30,
+          height: 30,
+          decoration: BoxDecoration(
+            color: _contactColor(contact),
+            shape: BoxShape.circle,
+            border: Border.all(color: Colors.white, width: 1.8),
+            boxShadow: const [
+              BoxShadow(
+                color: Color(0x50000000),
+                blurRadius: 3,
+                offset: Offset(0, 2),
+              ),
+            ],
           ),
-        ],
-      ),
-      child: Center(
-        child: Icon(_contactIconData(contact), color: Colors.white, size: 22),
-      ),
+          child: Center(
+            child: Icon(
+              _contactIconData(contact),
+              color: Colors.white,
+              size: 15,
+            ),
+          ),
+        ),
+        Positioned(top: 44, child: _markerNameTag(contact.displayName)),
+      ],
     );
   }
 
-  Widget _buildSelfMarker(ThemeData theme) {
-    return Container(
-      decoration: BoxDecoration(
-        color: theme.colorScheme.primaryContainer,
-        shape: BoxShape.circle,
-        border: Border.all(color: theme.colorScheme.primary, width: 2.5),
-        boxShadow: const [
-          BoxShadow(
-            color: Color(0x50000000),
-            blurRadius: 4,
-            offset: Offset(0, 2),
+  Widget _buildSelfMarker(ThemeData theme, String? selfName) {
+    return Stack(
+      clipBehavior: Clip.none,
+      alignment: Alignment.center,
+      children: [
+        Container(
+          width: 30,
+          height: 30,
+          decoration: BoxDecoration(
+            color: theme.colorScheme.primaryContainer,
+            shape: BoxShape.circle,
+            border: Border.all(color: theme.colorScheme.primary, width: 2.5),
+            boxShadow: const [
+              BoxShadow(
+                color: Color(0x50000000),
+                blurRadius: 4,
+                offset: Offset(0, 2),
+              ),
+            ],
           ),
-        ],
+          child: Center(
+            child: Icon(
+              Icons.navigation,
+              color: theme.colorScheme.primary,
+              size: 15,
+            ),
+          ),
+        ),
+        Positioned(
+          top: 44,
+          child: _markerNameTag(
+            (selfName != null && selfName.trim().isNotEmpty)
+                ? selfName
+                : context.l10n.mapLegendYou,
+          ),
+        ),
+      ],
+    );
+  }
+
+  Widget _markerNameTag(String text) {
+    final compact = text.trim();
+    const maxChars = 12;
+    final label =
+        compact.length > maxChars
+            ? '${compact.substring(0, maxChars - 1)}...'
+            : compact;
+    return Container(
+      constraints: const BoxConstraints(maxWidth: 80),
+      padding: const EdgeInsets.symmetric(horizontal: 5, vertical: 1.5),
+      decoration: BoxDecoration(
+        color: Colors.black.withValues(alpha: 0.72),
+        borderRadius: BorderRadius.circular(5),
       ),
-      child: Center(
-        child: Icon(
-          Icons.navigation,
-          color: theme.colorScheme.primary,
-          size: 22,
+      child: Text(
+        label,
+        maxLines: 1,
+        overflow: TextOverflow.ellipsis,
+        style: const TextStyle(
+          color: Colors.white,
+          fontSize: 9,
+          fontWeight: FontWeight.w600,
+          height: 1.0,
         ),
       ),
     );
@@ -819,7 +877,7 @@ class _MapScreenState extends ConsumerState<MapScreen> {
           style: const TextStyle(
             color: Colors.white,
             fontWeight: FontWeight.bold,
-            fontSize: 16,
+            fontSize: 13,
           ),
         ),
       ),
