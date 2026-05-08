@@ -1846,11 +1846,11 @@ class AppLocalizationsEs extends AppLocalizations {
       'Usar com cuidado — estas opções afectam a compatibilidade no ar com outros nós.';
 
   @override
-  String get radioSettingsPathHashMode => 'Tamanho do hash de caminho';
+  String get radioSettingsPathHashMode => 'Tamaño del hash de ruta';
 
   @override
   String get radioSettingsPathHashModeDesc =>
-      'Número de bytes usados por salto no caminho de encaminhamento. Valores maiores reduzem a probabilidade de colisão entre nós distantes. Requer firmware v10+. Predefinição: 1 byte.';
+      'Número de bytes utilizados por salto en la ruta de encaminamiento. Valores mayores reducen la probabilidad de colisión entre nodos distantes. Requiere firmware v1.14.0+. Predeterminado: 1 byte.';
 
   @override
   String get radioSettingsPathHashMode1 => '1 byte';
@@ -1863,22 +1863,23 @@ class AppLocalizationsEs extends AppLocalizations {
 
   @override
   String get radioSettingsPathHashModeCaptionDefault =>
-      '1 byte por salto — predefinição, compatível com todos os firmwares.';
+      '1 byte por salto — predeterminado, compatible con todos los firmwares.';
 
   @override
   String get radioSettingsPathHashModeCaptionExperimental =>
-      'Experimental — só nós com firmware v10+ encaminham este pacote correctamente.';
+      'Experimental — solo los nodos con firmware v10+ encaminarán este paquete correctamente.';
 
   @override
   String get radioSettingsPathHashModeUnsupported =>
-      'Não suportado por este firmware.';
+      'No compatible con este firmware.';
 
   @override
-  String get radioSettingsPathHashModeSaved => 'Tamanho do hash actualizado';
+  String get radioSettingsPathHashModeSaved =>
+      'Tamaño del hash de ruta actualizado';
 
   @override
   String get radioSettingsPathHashModeFailed =>
-      'Falha ao actualizar o tamanho do hash';
+      'Error al actualizar el tamaño del hash de ruta';
 
   @override
   String get radioSettingsAutoAddTitle => 'Adición automática de contactos';

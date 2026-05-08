@@ -3547,7 +3547,7 @@ abstract class AppLocalizations {
   /// No description provided for @radioSettingsPathHashModeDesc.
   ///
   /// In pt, this message translates to:
-  /// **'Número de bytes usados por salto no caminho de encaminhamento. Valores maiores reduzem a probabilidade de colisão entre nós distantes. Requer firmware v10+. Predefinição: 1 byte.'**
+  /// **'Número de bytes usados por salto no caminho de encaminhamento. Valores maiores reduzem a probabilidade de colisão entre nós distantes. Requer firmware v1.14.0+. Predefinição: 1 byte.'**
   String get radioSettingsPathHashModeDesc;
 
   /// No description provided for @radioSettingsPathHashMode1.

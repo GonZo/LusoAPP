@@ -1844,7 +1844,7 @@ class AppLocalizationsPt extends AppLocalizations {
 
   @override
   String get radioSettingsPathHashModeDesc =>
-      'Número de bytes usados por salto no caminho de encaminhamento. Valores maiores reduzem a probabilidade de colisão entre nós distantes. Requer firmware v10+. Predefinição: 1 byte.';
+      'Número de bytes usados por salto no caminho de encaminhamento. Valores maiores reduzem a probabilidade de colisão entre nós distantes. Requer firmware v1.14.0+. Predefinição: 1 byte.';
 
   @override
   String get radioSettingsPathHashMode1 => '1 byte';

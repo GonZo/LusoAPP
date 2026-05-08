@@ -1834,7 +1834,7 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get radioSettingsPathHashModeDesc =>
-      'Number of bytes used per hop in the routing path. Larger values lower the chance of two distant nodes colliding on the same hash. Requires firmware v10+. Default: 1 byte.';
+      'Number of bytes used per hop in the routing path. Larger values lower the chance of two distant nodes colliding on the same hash. Requires firmware v1.14.0+. Default: 1 byte.';
 
   @override
   String get radioSettingsPathHashMode1 => '1 byte';
