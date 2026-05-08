@@ -123,7 +123,7 @@ if [[ -n "$EXPORT_OPTIONS_PLIST" ]] && [[ ! -f "$EXPORT_OPTIONS_PLIST" ]]; then
     exit 1
 fi
 
-log "lusoapp v$VERSION — MacinCloud iOS ${BUILD_MODE^} pipeline"
+log "lusoapp v$VERSION — MacinCloud iOS $BUILD_MODE pipeline"
 log "============================================================="
 
 if [[ "$RUN_CLEAN" == "true" ]]; then
