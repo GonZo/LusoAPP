@@ -536,6 +536,13 @@ class AppLocalizationsEs extends AppLocalizations {
   String get settingsThemeDark => 'Oscuro';
 
   @override
+  String get settingsTextSize => 'Tamaño del texto';
+
+  @override
+  String get settingsTextSizeDesc =>
+      'Ajusta el tamaño global del texto en la app.';
+
+  @override
   String get settingsAccent => 'Color de acento';
 
   @override

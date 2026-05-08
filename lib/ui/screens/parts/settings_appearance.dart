@@ -91,6 +91,7 @@ class _AppearanceCard extends ConsumerWidget {
     final otherColor = ref.watch(otherMentionColorProvider);
     final themeMode = ref.watch(themeModeProvider);
     final accent = ref.watch(accentColorProvider);
+    final appTextScale = ref.watch(appTextScaleProvider);
 
     // A tappable colour pill used for mention colour rows.
     Widget pillButton(Color color, VoidCallback onTap) {
@@ -183,6 +184,53 @@ class _AppearanceCard extends ConsumerWidget {
               ),
             ),
             const SizedBox(height: 14),
+            const Divider(height: 1),
+
+            // ── Global text size ────────────────────────────────────────
+            ListTile(
+              contentPadding: const EdgeInsets.symmetric(horizontal: 4),
+              title: Text(context.l10n.settingsTextSize),
+              subtitle: Text(
+                context.l10n.settingsTextSizeDesc,
+                style: theme.textTheme.labelSmall?.copyWith(
+                  color: theme.colorScheme.onSurfaceVariant,
+                ),
+              ),
+              trailing: Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Text(
+                    '${(appTextScale * 100).round()}%',
+                    style: theme.textTheme.labelMedium,
+                  ),
+                  if ((appTextScale - appTextScaleDefault).abs() > 0.001)
+                    IconButton(
+                      tooltip: context.l10n.commonReset,
+                      icon: Icon(
+                        Icons.restart_alt,
+                        size: 20,
+                        color: theme.colorScheme.onSurfaceVariant,
+                      ),
+                      onPressed:
+                          () => ref.read(appTextScaleProvider.notifier).reset(),
+                    ),
+                ],
+              ),
+            ),
+            Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 8),
+              child: Slider(
+                value: appTextScale,
+                min: appTextScaleMin,
+                max: appTextScaleMax,
+                divisions: 10,
+                label: '${(appTextScale * 100).round()}%',
+                onChanged:
+                    (value) =>
+                        ref.read(appTextScaleProvider.notifier).set(value),
+              ),
+            ),
+            const SizedBox(height: 2),
             const Divider(height: 1),
 
             // ── Accent colour ────────────────────────────────────────────

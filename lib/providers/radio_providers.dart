@@ -52,6 +52,11 @@ final radioServiceProvider = StateProvider<RadioService?>((_) => null);
 /// don't falsely hide contacts from the discover screen.
 final radioContactsSnapshotProvider = StateProvider<Set<String>>((_) => {});
 
+/// Snapshot of channel indexes confirmed by the radio during the current sync.
+/// Used by the connect screen so it does not show locally cached channels as if
+/// they had already been read back from the device.
+final radioChannelsSnapshotProvider = StateProvider<Set<int>>((_) => {});
+
 /// True once the first [EndContactsResponse] has been received after the
 /// current connection was established.  Reset to false on every new connect
 /// attempt and on disconnect.  Used by the contacts screen to distinguish
@@ -1329,6 +1334,40 @@ class ThemeModeNotifier extends StateNotifier<ThemeMode> {
 final themeModeProvider = StateNotifierProvider<ThemeModeNotifier, ThemeMode>(
   (ref) => ThemeModeNotifier(),
 );
+
+const double appTextScaleMin = 0.85;
+const double appTextScaleMax = 1.35;
+const double appTextScaleDefault = 1.0;
+
+/// App-wide text scale factor persisted to SharedPreferences.
+class AppTextScaleNotifier extends StateNotifier<double> {
+  AppTextScaleNotifier() : super(appTextScaleDefault) {
+    _load();
+  }
+
+  static const _key = 'app_text_scale_v1';
+
+  Future<void> _load() async {
+    final prefs = await SharedPreferences.getInstance();
+    final raw = prefs.getDouble(_key);
+    if (raw == null) return;
+    state = raw.clamp(appTextScaleMin, appTextScaleMax);
+  }
+
+  Future<void> set(double value) async {
+    final clamped = value.clamp(appTextScaleMin, appTextScaleMax);
+    state = clamped;
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setDouble(_key, clamped);
+  }
+
+  Future<void> reset() => set(appTextScaleDefault);
+}
+
+final appTextScaleProvider =
+    StateNotifierProvider<AppTextScaleNotifier, double>(
+      (ref) => AppTextScaleNotifier(),
+    );
 
 /// User-selected accent colour. `null` means "use brand orange (default)".
 class AccentColorNotifier extends StateNotifier<Color?> {

@@ -1090,6 +1090,18 @@ abstract class AppLocalizations {
   /// **'Escuro'**
   String get settingsThemeDark;
 
+  /// No description provided for @settingsTextSize.
+  ///
+  /// In pt, this message translates to:
+  /// **'Tamanho do texto'**
+  String get settingsTextSize;
+
+  /// No description provided for @settingsTextSizeDesc.
+  ///
+  /// In pt, this message translates to:
+  /// **'Ajusta o tamanho global do texto na app.'**
+  String get settingsTextSizeDesc;
+
   /// No description provided for @settingsAccent.
   ///
   /// In pt, this message translates to:

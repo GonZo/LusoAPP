@@ -26,12 +26,6 @@ class ConnectionNotifier extends StateNotifier<TransportState> {
   static const _keepaliveFgInterval = Duration(seconds: 15);
   static const _keepaliveBgInterval = Duration(seconds: 7);
 
-  /// When true the next [EndContactsResponse] will also update
-  /// [radioContactsSnapshotProvider].  Set before explicit contact syncs
-  /// (initial connect, deletion); left false for path-update auto-refreshes
-  /// so the discover screen is not destabilised by background syncs.
-  bool _pendingSnapshotUpdate = false;
-
   void _setStep(int step, String label) {
     _ref.read(connectionProgressProvider.notifier).state = step;
     _ref.read(connectionStepProvider.notifier).state = label;
@@ -42,6 +36,7 @@ class ConnectionNotifier extends StateNotifier<TransportState> {
     // Clear stale snapshot and sync flag so the contacts screen falls back
     // to the cached list while the new radio's sync is in progress.
     _ref.read(radioContactsSnapshotProvider.notifier).state = {};
+    _ref.read(radioChannelsSnapshotProvider.notifier).state = {};
     _ref.read(contactsSyncedProvider.notifier).state = false;
     state = TransportState.connecting;
     _setStep(0, 'A ligar via Bluetooth...');
@@ -118,6 +113,7 @@ class ConnectionNotifier extends StateNotifier<TransportState> {
     // Clear stale snapshot and sync flag so the contacts screen falls back
     // to the cached list while the new radio's sync is in progress.
     _ref.read(radioContactsSnapshotProvider.notifier).state = {};
+    _ref.read(radioChannelsSnapshotProvider.notifier).state = {};
     _ref.read(contactsSyncedProvider.notifier).state = false;
     state = TransportState.connecting;
     _setStep(0, 'A ligar via USB série...');
@@ -225,6 +221,7 @@ class ConnectionNotifier extends StateNotifier<TransportState> {
     // Clear stale snapshot and sync flag so the contacts screen falls back
     // to the cached list while the new radio's sync is in progress.
     _ref.read(radioContactsSnapshotProvider.notifier).state = {};
+    _ref.read(radioChannelsSnapshotProvider.notifier).state = {};
     _ref.read(contactsSyncedProvider.notifier).state = false;
     state = TransportState.connecting;
     _setStep(0, 'A ligar via USB Web Serial...');
@@ -361,6 +358,7 @@ class ConnectionNotifier extends StateNotifier<TransportState> {
     // Clear snapshot and sync flag so the contacts screen no longer filters
     // by the disconnected radio's keys on the next connection.
     _ref.read(radioContactsSnapshotProvider.notifier).state = {};
+    _ref.read(radioChannelsSnapshotProvider.notifier).state = {};
     _ref.read(contactsSyncedProvider.notifier).state = false;
     _ref.read(traceHistoryProvider.notifier).clear();
     // Clear the current radio ID so channel storage is not accidentally
@@ -579,7 +577,6 @@ class ConnectionNotifier extends StateNotifier<TransportState> {
           // stored on the radio, used by the contacts screen to filter out
           // advert-only (not-on-radio) entries.  The discover screen no longer
           // uses this snapshot, so updating it on every sync is safe.
-          _pendingSnapshotUpdate = false;
           _ref.read(radioContactsSnapshotProvider.notifier).state =
               service.contacts.map((c) => _keyHex(c.publicKey)).toSet();
           // Mark that a full sync has completed for this connection — the
@@ -590,11 +587,19 @@ class ConnectionNotifier extends StateNotifier<TransportState> {
         case ContactDeletedPush():
           // Radio confirmed deletion — request a fresh contact list so
           // service.contacts is rebuilt without the deleted entry before
-          // refreshing contactsProvider.  Also schedule a snapshot update so
-          // the discover screen correctly reflects the post-deletion state.
-          _pendingSnapshotUpdate = true;
+          // refreshing contactsProvider.
           unawaited(service.requestContacts().catchError((_) {}));
         case ChannelInfoResponse():
+          _ref
+              .read(radioChannelsSnapshotProvider.notifier)
+              .update(
+                (state) => {
+                  ...state,
+                  ...service.channels
+                      .where((c) => !c.isEmpty)
+                      .map((c) => c.index),
+                },
+              );
           _ref.read(channelsProvider.notifier).refresh(service.channels);
           _pushWidget();
         case PrivateMessageResponse(:final message):
@@ -845,7 +850,6 @@ class ConnectionNotifier extends StateNotifier<TransportState> {
                   service
                       .addUpdateContact(contact)
                       .then((_) {
-                        _pendingSnapshotUpdate = true;
                         return service.requestContacts().catchError((_) {});
                       })
                       .catchError((_) {});
@@ -917,10 +921,7 @@ class ConnectionNotifier extends StateNotifier<TransportState> {
           _ref.read(loginResultProvider.notifier).state = false;
         case PathUpdatedPush():
           // Radio has updated a contact's cached route — re-sync the contact
-          // list so the UI shows the new hop count.  Do NOT set
-          // _pendingSnapshotUpdate here: path-update refreshes must not
-          // update the discover snapshot (race condition where auto-re-added
-          // contacts would disappear from discover before the user can see them).
+          // list so the UI shows the new hop count.
           service.requestContacts().catchError((_) {});
         case StatsCoreResponse():
           _ref.read(radioStatsCoreProvider.notifier).state = response;
@@ -1094,10 +1095,7 @@ class ConnectionNotifier extends StateNotifier<TransportState> {
     unawaited(service.requestStats(statsTypePackets).catchError((_) {}));
 
     // 3. Contacts — wait for the end-of-contacts marker.
-    // Mark that the resulting EndContactsResponse should update the discover
-    // snapshot — this is the authoritative initial sync.
     _setStep(3, 'A sincronizar contactos...');
-    _pendingSnapshotUpdate = true;
     final contactsResp = await _sendAndWait(
       service,
       () => service.requestContacts(),

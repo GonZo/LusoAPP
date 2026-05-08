@@ -257,6 +257,7 @@ class _McAppPtState extends ConsumerState<McAppPt> {
     final router = ref.watch(routerProvider);
     final themeMode = ref.watch(themeModeProvider);
     final accent = ref.watch(accentColorProvider);
+    final appTextScale = ref.watch(appTextScaleProvider);
 
     return MaterialApp.router(
       title: 'LusoAPP',
@@ -264,6 +265,15 @@ class _McAppPtState extends ConsumerState<McAppPt> {
       theme: AppTheme.build(brightness: Brightness.light, accent: accent),
       darkTheme: AppTheme.build(brightness: Brightness.dark, accent: accent),
       themeMode: themeMode,
+      builder: (context, child) {
+        final mediaQuery = MediaQuery.of(context);
+        return MediaQuery(
+          data: mediaQuery.copyWith(
+            textScaler: TextScaler.linear(appTextScale),
+          ),
+          child: child ?? const SizedBox.shrink(),
+        );
+      },
       localizationsDelegates: AppLocalizations.localizationsDelegates,
       supportedLocales: AppLocalizations.supportedLocales,
       routerConfig: router,

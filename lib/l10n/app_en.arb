@@ -202,6 +202,8 @@
   "settingsThemeSystem": "System",
   "settingsThemeLight": "Light",
   "settingsThemeDark": "Dark",
+  "settingsTextSize": "Text size",
+  "settingsTextSizeDesc": "Adjust the global text size across the app.",
   "settingsAccent": "Accent color",
   "settingsAccentDefault": "Default (brand orange)",
   "settingsAccentCustom": "Custom",

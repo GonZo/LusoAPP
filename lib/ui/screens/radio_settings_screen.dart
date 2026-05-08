@@ -184,7 +184,7 @@ class _RadioSettingsScreenState extends ConsumerState<RadioSettingsScreen> {
     final config = ref.watch(radioConfigProvider);
     final deviceInfo = ref.watch(deviceInfoProvider);
     final selfInfo = ref.watch(selfInfoProvider);
-    final contacts = ref.watch(contactsProvider);
+    final radioContactsSnapshot = ref.watch(radioContactsSnapshotProvider);
     final channels = ref.watch(channelsProvider);
     final discovered = ref.watch(discoveredContactsProvider);
     final theme = Theme.of(context);
@@ -218,7 +218,7 @@ class _RadioSettingsScreenState extends ConsumerState<RadioSettingsScreen> {
                 _DeviceInfoCard(
                   selfInfo: selfInfo,
                   deviceInfo: deviceInfo,
-                  contactCount: contacts.length,
+                  contactCount: radioContactsSnapshot.length,
                   activeChannelCount: channels.where((c) => !c.isEmpty).length,
                   discoveredCount: discovered.length,
                   appVersion: _appVersion,

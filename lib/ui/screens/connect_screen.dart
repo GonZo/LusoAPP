@@ -424,9 +424,8 @@ class _ConnectScreenState extends ConsumerState<ConnectScreen> {
 
     setState(() {
       _connectingTarget = target;
-      _cachedContactCount = ref.read(contactsProvider).length;
-      _cachedChannelCount =
-          ref.read(channelsProvider).where((c) => !c.isEmpty).length;
+      _cachedContactCount = ref.read(radioContactsSnapshotProvider).length;
+      _cachedChannelCount = ref.read(radioChannelsSnapshotProvider).length;
     });
     final connection = ref.read(connectionProvider.notifier);
     final name = target.device.name;
@@ -525,9 +524,8 @@ class _ConnectScreenState extends ConsumerState<ConnectScreen> {
                 ? _ConnectType.webSerialKiss
                 : _ConnectType.serialCompanion,
       );
-      _cachedContactCount = ref.read(contactsProvider).length;
-      _cachedChannelCount =
-          ref.read(channelsProvider).where((c) => !c.isEmpty).length;
+      _cachedContactCount = ref.read(radioContactsSnapshotProvider).length;
+      _cachedChannelCount = ref.read(radioChannelsSnapshotProvider).length;
     });
     if (last.type == 'ble' && !_checkBluetoothOn()) return;
 
@@ -784,12 +782,8 @@ class _ConnectScreenState extends ConsumerState<ConnectScreen> {
                   stepIndex: stepIndex,
                   totalSteps: totalSteps,
                   theme: theme,
-                  contactCount: ref.watch(contactsProvider).length,
-                  channelCount:
-                      ref
-                          .watch(channelsProvider)
-                          .where((c) => !c.isEmpty)
-                          .length,
+                  contactCount: ref.watch(radioContactsSnapshotProvider).length,
+                  channelCount: ref.watch(radioChannelsSnapshotProvider).length,
                   cachedContactCount: _cachedContactCount,
                   cachedChannelCount: _cachedChannelCount,
                 )
