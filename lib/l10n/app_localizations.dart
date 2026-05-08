@@ -3391,7 +3391,7 @@ abstract class AppLocalizations {
   /// No description provided for @radioSettingsDiscovered.
   ///
   /// In pt, this message translates to:
-  /// **'Descobertos'**
+  /// **'Contactos locais'**
   String get radioSettingsDiscovered;
 
   /// No description provided for @radioSettingsAppVersion.

@@ -262,16 +262,6 @@ class _ChannelTile extends ConsumerWidget {
                 ),
               ),
 
-              const SizedBox(width: 8),
-
-              // Options button
-              IconButton(
-                icon: const Icon(Icons.more_vert, size: 18),
-                tooltip: context.l10n.channelsOptionsFabTooltip,
-                onPressed: onEdit,
-                visualDensity: VisualDensity.compact,
-              ),
-
               // Trailing: timestamp + total count
               Column(
                 crossAxisAlignment: CrossAxisAlignment.end,
@@ -298,6 +288,16 @@ class _ChannelTile extends ConsumerWidget {
                     ),
                   ],
                 ],
+              ),
+
+              const SizedBox(width: 4),
+
+              // Keep options at the far-right edge of the tile.
+              IconButton(
+                icon: const Icon(Icons.more_vert, size: 18),
+                tooltip: context.l10n.channelsOptionsFabTooltip,
+                onPressed: onEdit,
+                visualDensity: VisualDensity.compact,
               ),
             ],
           ),

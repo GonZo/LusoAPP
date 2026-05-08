@@ -141,7 +141,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
         bottomNavigationBar: NavigationBar(
           selectedIndex: tabIndex,
           onDestinationSelected: (index) {
-            widget.navigationShell.goBranch(index, initialLocation: false);
+            widget.navigationShell.goBranch(index, initialLocation: true);
           },
           destinations: [
             NavigationDestination(

@@ -1769,7 +1769,7 @@ class AppLocalizationsEs extends AppLocalizations {
   String get radioSettingsContacts => 'Contactos';
 
   @override
-  String get radioSettingsDiscovered => 'Descubiertos';
+  String get radioSettingsDiscovered => 'Contactos locales';
 
   @override
   String get radioSettingsAppVersion => 'Versión de App';

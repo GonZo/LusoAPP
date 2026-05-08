@@ -599,7 +599,7 @@
   "radioSettingsStorage": "Almacenamiento",
   "radioSettingsChannels": "Canales",
   "radioSettingsContacts": "Contactos",
-  "radioSettingsDiscovered": "Descubiertos",
+  "radioSettingsDiscovered": "Contactos locales",
   "radioSettingsAppVersion": "Versión de App",
   "radioSettingsLoRa": "Parámetros LoRa",
   "radioSettingsFrequency": "Frecuencia (MHz)",
