@@ -654,7 +654,6 @@
   "radioSettingsPathHashModeDesc": "Number of bytes used per hop in the routing path. Larger values lower the chance of two distant nodes colliding on the same hash. Requires firmware v1.14.0+. Default: 1 byte.",
   "radioSettingsPathHashMode1": "1 byte",
   "radioSettingsPathHashMode2": "2 bytes",
-  "radioSettingsPathHashMode3": "3 bytes",
   "radioSettingsPathHashModeCaptionDefault": "1 byte per hop — default, compatible with all firmwares.",
   "radioSettingsPathHashModeCaptionExperimental": "Experimental — only nodes running firmware v10+ will route this packet correctly.",
   "radioSettingsPathHashModeUnsupported": "Not supported by this firmware.",

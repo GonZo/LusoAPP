@@ -1853,9 +1853,6 @@ class AppLocalizationsPt extends AppLocalizations {
   String get radioSettingsPathHashMode2 => '2 bytes';
 
   @override
-  String get radioSettingsPathHashMode3 => '3 bytes';
-
-  @override
   String get radioSettingsPathHashModeCaptionDefault =>
       '1 byte por salto — predefinição, compatível com todos os firmwares.';
 
