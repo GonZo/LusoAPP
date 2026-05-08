@@ -40,6 +40,9 @@ flutter run
 
 # Build release APK
 flutter build apk --release
+
+# MacinCloud iOS release build (with icon generation)
+./scripts/build.macincloud.sh --release
 ```
 
 ### Supported Platforms
