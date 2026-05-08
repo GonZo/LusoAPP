@@ -51,12 +51,19 @@ const int cmdSignData = 0x22;
 const int cmdSignFinish = 0x23;
 const int cmdSendTracePath = 0x24;
 const int cmdSendTelemetryReq = 0x27;
+const int cmdSetOtherParams =
+    0x26; // 38 — manual_add_contacts, telemetry_mode, adv_loc_policy, multi_acks
 const int cmdSendBinaryReq = 0x32;
 const int cmdSendPathDiscoveryReq = 0x34;
 const int cmdSendControlData = 0x37;
 const int cmdGetStats = 0x38;
 const int cmdSetAutoAddConfig = 0x3A; // 58 — write autoadd bitmask + max-hops
 const int cmdGetAutoAddConfig = 0x3B; // 59 — read  autoadd bitmask + max-hops
+
+/// Experimental: set the wire-level path hash size used by sendFlood().
+/// Mode 0 = 1-byte hashes (default, all firmwares), 1 = 2-byte, 2 = 3-byte.
+/// Reported back in the device-info response at byte 80 (firmware v10+).
+const int cmdSetPathHashMode = 0x3D; // 61 — frame: [cmd, 0x00, mode]
 
 // ---------------------------------------------------------------------------
 // CMD_GET_STATS sub-types

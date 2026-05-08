@@ -18,6 +18,101 @@
   "commonShare": "Compartir",
   "commonCopy": "Copiar",
   "commonRename": "Renombrar",
+  "commonReset": "Restablecer",
+  "commonJustNow": "ahora mismo",
+  "commonMinutesAgo": "hace {minutes} min",
+  "@commonMinutesAgo": {
+    "placeholders": {
+      "minutes": {
+        "type": "int"
+      }
+    }
+  },
+  "commonHoursAgo": "hace {hours} h",
+  "@commonHoursAgo": {
+    "placeholders": {
+      "hours": {
+        "type": "int"
+      }
+    }
+  },
+  "gpsSharingTitle": "Compartir GPS",
+  "gpsSharingSubtitle": "Tú decides si tu ubicación se incluye en los anuncios de la radio. Desactivado por defecto.",
+  "gpsSharingStatusOff": "DESACTIVADO",
+  "gpsSharingStatusManual": "MANUAL",
+  "gpsSharingStatusAuto": "AUTOMÁTICO",
+  "gpsSharingModeOff": "Desactivado",
+  "gpsSharingModeManual": "Manual",
+  "gpsSharingModeAuto": "Automático",
+  "gpsSharingPrecisionTitle": "Precisión enviada",
+  "gpsSharingPrecisionExact": "Exacta",
+  "gpsSharingPrecisionRough": "Aproximada",
+  "gpsSharingPrecisionVague": "Vaga",
+  "gpsSharingIntervalLabel": "Intervalo de actualización",
+  "gpsSharingShareNow": "Compartir ahora",
+  "gpsSharingClearNow": "Borrar de la radio",
+  "gpsSharingClearedOnRadio": "Ubicación borrada de la radio.",
+  "gpsSharingPrivacyDisclaimer": "Tu posición se incluirá en los anuncios LoRa de tu radio y puede ser visible para otros nodos. Activa sólo si aceptas compartirla.",
+  "gpsSharingLastShared": "Compartido {ago} — {lat}, {lon}",
+  "@gpsSharingLastShared": {
+    "placeholders": {
+      "ago": {},
+      "lat": {},
+      "lon": {}
+    }
+  },
+  "gpsSharingOutcomeOk": "✅ Ubicación enviada: {lat}, {lon}",
+  "@gpsSharingOutcomeOk": {
+    "placeholders": {
+      "lat": {},
+      "lon": {}
+    }
+  },
+  "gpsSharingOutcomeCleared": "Ubicación borrada de la radio.",
+  "gpsSharingOutcomeDisabled": "El compartir GPS está desactivado en Ajustes.",
+  "gpsSharingOutcomeNoPerm": "Permiso de ubicación denegado.",
+  "gpsSharingOutcomeServiceOff": "Servicio de ubicación desactivado.",
+  "gpsSharingOutcomeNoFix": "Sin señal GPS disponible.",
+  "gpsSharingOutcomeDisconnected": "Radio desconectada — conecta primero.",
+  "gpsSharingOutcomeFailed": "Falló el envío de ubicación.",
+  "gpsSharingOutcomeSkipped": "Posición sin cambios — envío omitido.",
+  "gpsSharingMinMoveLabel": "Movimiento mínimo",
+  "gpsSharingMinMoveAlways": "Enviar siempre",
+  "gpsSharingMinMoveHint": "En modo automático, solo envía un nuevo fix si te has movido al menos esta distancia desde el último envío. Ahorra tiempo de antena LoRa.",
+  "gpsSharingAdvPolicyTitle": "Difundir ubicación en los anuncios",
+  "gpsSharingAdvPolicyNever": "Desactivado — tus anuncios no incluyen coordenadas.",
+  "gpsSharingAdvPolicyAlways": "Activado — cada anuncio incluye la última ubicación conocida de la radio.",
+  "gpsSharingAdvPolicyUnknown": "Política de la radio: byte {value} — valor desconocido.",
+  "@gpsSharingAdvPolicyUnknown": {
+    "placeholders": {
+      "value": {}
+    }
+  },
+  "mapVisibilityShowTitle": "Mostrar en el mapa",
+  "mapVisibilityShowSubtitle": "Oculta este contacto de tu mapa, incluso si sus anuncios incluyen coordenadas.",
+  "cannedMessagesTitle": "Mensajes rápidos",
+  "cannedMessagesSubtitle": "Biblioteca de respuestas predefinidas para enviar con un toque (o desde el botón SOS del widget).",
+  "cannedMessagesAdd": "Añadir mensaje",
+  "cannedMessagesAddTitle": "Nuevo mensaje rápido",
+  "cannedMessagesEditTitle": "Editar mensaje rápido",
+  "cannedMessagesEmpty": "Sin mensajes guardados. Toca + para añadir.",
+  "cannedMessagesReset": "Restablecer por defecto",
+  "cannedMessagesResetTitle": "¿Restablecer mensajes?",
+  "cannedMessagesResetConfirm": "Perderás todos los cambios y volverás a la lista original.",
+  "cannedMessagesDeleteTitle": "¿Borrar mensaje?",
+  "cannedMessagesDeleteConfirm": "Vas a borrar “{label}”.",
+  "@cannedMessagesDeleteConfirm": {
+    "placeholders": {
+      "label": {}
+    }
+  },
+  "cannedMessagesLabelHint": "Etiqueta (opcional)",
+  "cannedMessagesTextHint": "Texto del mensaje",
+  "cannedMessagesEmergencyToggle": "Mensaje de emergencia",
+  "cannedMessagesEmergencyDesc": "Usado por el botón SOS del widget. Solo uno puede estar marcado.",
+  "cannedMessagesPickerTooltip": "Mensajes rápidos",
+  "cannedMessagesPickerTitle": "Insertar mensaje rápido",
+  "cannedMessagesPickerSubtitle": "Toca para ponerlo en el campo de texto.",
   "commonConfirm": "Confirmar",
   "commonError": "Error",
   "commonErrors": "Errores",
@@ -103,6 +198,17 @@
   "settingsRebootSent": "Comando de reinicio enviado. Esperando reconexión...",
   "settingsRebootFail": "Error al enviar comando de reinicio",
   "settingsAppearance": "Apariencia",
+  "settingsTheme": "Tema",
+  "settingsThemeSystem": "Sistema",
+  "settingsThemeLight": "Claro",
+  "settingsThemeDark": "Oscuro",
+  "settingsTextSize": "Tamaño del texto",
+  "settingsTextSizeDesc": "Ajusta el tamaño global del texto en la app.",
+  "settingsAccent": "Color de acento",
+  "settingsAccentDefault": "Predeterminado (naranja de la marca)",
+  "settingsAccentCustom": "Personalizado",
+  "settingsAccentReset": "Restablecer",
+  "settingsMentionColors": "Colores de mención",
   "settingsSelfMention": "Mención propia (@[Tú])",
   "settingsOtherMention": "Mención de otros (@[Nombre])",
   "settingsChooseColor": "Elegir color",
@@ -112,8 +218,42 @@
   "settingsNotificationPermissionDenied": "Permiso de notificación no concedido",
   "settingsAllow": "Permitir",
   "settingsPrivateMessages": "Mensajes privados",
+  "settingsPrivateMessagesDesc": "Notificar al recibir un mensaje directo",
   "settingsChannelMessages": "Mensajes de canal",
+  "settingsChannelMessagesDesc": "Notificar mensajes en canales",
+  "settingsChannelMentionsOnly": "Solo menciones",
+  "settingsChannelMentionsOnlyDesc": "Notificar solo cuando un mensaje del canal mencione tu nombre",
   "settingsBackgroundOnly": "Solo en segundo plano",
+  "settingsBackgroundOnlyDesc": "Notificar solo cuando la app no esté en primer plano",
+  "settingsSosDesc": "Configura el destino y el mensaje de emergencia. Usa '{gps}' en el texto para insertar coordenadas.",
+  "settingsSosTarget": "Destino SOS",
+  "settingsSosTargetChannel": "Canal",
+  "settingsSosTargetPrivateContact": "Contacto privado",
+  "settingsSosChannelLabel": "Canal de envío",
+  "settingsSosGeneralChannel": "#0 General",
+  "settingsSosDestinationContact": "Contacto de destino",
+  "settingsSosNoContactsAvailable": "No hay contactos disponibles",
+  "settingsSosTapToSearchContact": "Toca para buscar un contacto",
+  "settingsSosClearContact": "Limpiar contacto",
+  "settingsSosMessage": "Mensaje SOS",
+  "settingsSosMessageHint": "Ej.: SOS - necesito ayuda! '{gps}'",
+  "settingsSosIncludeGps": "Incluir coordenadas GPS del teléfono",
+  "settingsSosIncludeGpsDesc": "Si no hay GPS o permiso, el mensaje se envía sin coordenadas.",
+  "settingsSosSendNow": "Enviar SOS ahora",
+  "settingsSosSent": "SOS enviado",
+  "settingsSosRadioNotConnected": "La radio no está conectada",
+  "settingsSosMissingContact": "Contacto SOS no configurado/encontrado",
+  "settingsSosSendFailed": "Error al enviar SOS",
+  "settingsSosSendFailedDetail": "Error SOS: {detail}",
+  "@settingsSosSendFailedDetail": {
+    "placeholders": {
+      "detail": {}
+    }
+  },
+  "settingsSosSearchContact": "Buscar contacto SOS",
+  "settingsSosSearchHint": "Nombre o ID corto",
+  "settingsSosNoContactFound": "No se encontraron contactos",
+  "settingsSosUnnamedChannel": "(sin nombre)",
   "settingsPrivateKeyCopy": "Copia de clave privada",
   "settingsPrivateKeyDesc": "Tu clave privada te identifica en la red. Guarda una copia segura antes de cambiar de dispositivo.",
   "settingsSaveFromRadio": "Guardar desde radio",
@@ -328,9 +468,18 @@
   "connectBrowserNote": "El navegador mostrará un selector de dispositivos Bluetooth",
   "connectScanningMessage": "Buscando radios MeshCore...",
   "connectTapHint": "Toca en \"Buscar\" para encontrar dispositivos",
+  "connectSectionBluetooth": "BLUETOOTH",
+  "connectSectionSerial": "USB / SERIE",
   "connectDeviceBLE": "(Bluetooth LE)",
   "connectDeviceUSB": "(Serie USB — Companion)",
   "connectDeviceKISS": "(KISS TNC)",
+  "connectDeviceWebUSB": "Web USB — Companion",
+  "connectDeviceWebKISS": "Web USB — KISS TNC",
+  "connectWebUsbButton": "Conectar vía USB (Web Serial)",
+  "connectWebUsbScanning": "Seleccionando puerto USB...",
+  "connectWebUsbHint": "Compatible con Chrome y Edge. El navegador mostrará un selector de puertos USB.",
+  "connectWebUsbExpiredMessage": "Puerto USB no disponible (página recargada). Seleccione el dispositivo nuevamente.",
+  "connectWebUsbAction": "Conectar vía USB",
   "connectStepConnecting": "Conectando...",
   "connectStepWaiting": "Esperando radio...",
   "connectStepDeviceInfo": "Información del dispositivo",
@@ -415,6 +564,12 @@
   "mapShowMore": "Mostrar +",
   "mapHops": "salto(s)",
   "mapFinal": "Final:",
+  "mapLegendTitle": "Leyenda",
+  "mapLegendCompanion": "Compañero",
+  "mapLegendRepeater": "Repetidor",
+  "mapLegendRoom": "Sala",
+  "mapLegendSensor": "Sensor",
+  "mapLegendYou": "Tú",
   "mapAttribution": "MeshCore Portugal",
   "mapAttributionOSM": "© OpenStreetMap contributors",
   "mapPathPrefix": "Ruta ·",
@@ -444,7 +599,7 @@
   "radioSettingsStorage": "Almacenamiento",
   "radioSettingsChannels": "Canales",
   "radioSettingsContacts": "Contactos",
-  "radioSettingsDiscovered": "Descubiertos",
+  "radioSettingsDiscovered": "Contactos locales",
   "radioSettingsAppVersion": "Versión de App",
   "radioSettingsLoRa": "Parámetros LoRa",
   "radioSettingsFrequency": "Frecuencia (MHz)",
@@ -615,5 +770,118 @@
   "signalGood": "Buena señal",
   "signalExcellent": "Señal excelente",
   "urlOpenTitle": "¿Abrir enlace externo?",
-  "urlOpenConfirm": "Abrir"
+  "urlOpenConfirm": "Abrir",
+  "topologyScreenTitle": "Topología de Red",
+  "topologyTabGraph": "Grafo",
+  "topologyTabTimeline": "Cronología",
+  "topologyEmptyTitle": "Sin datos de topología",
+  "topologyEmptyHint": "Conéctate a una radio para\nvisualizar la red",
+  "topologySelf": "Yo",
+  "topologyResetView": "Restablecer vista",
+  "topologySnrGood": "SNR ≥ 5 dB",
+  "topologySnrMid": "SNR 0–5 dB",
+  "topologySnrBad": "SNR < 0 dB",
+  "topologyLabelId": "ID",
+  "topologyLabelPath": "Ruta",
+  "topologyLabelSeen": "Visto",
+  "topologySecondsAgo": "hace {s}s",
+  "@topologySecondsAgo": {
+    "placeholders": {
+      "s": {
+        "type": "int"
+      }
+    }
+  },
+  "topologyMinutesAgo": "hace {min}min",
+  "@topologyMinutesAgo": {
+    "placeholders": {
+      "min": {
+        "type": "int"
+      }
+    }
+  },
+  "topologyHoursAgo": "hace {h}h",
+  "@topologyHoursAgo": {
+    "placeholders": {
+      "h": {
+        "type": "int"
+      }
+    }
+  },
+  "topologyDaysAgo": "hace {d}d",
+  "@topologyDaysAgo": {
+    "placeholders": {
+      "d": {
+        "type": "int"
+      }
+    }
+  },
+  "topologyWeeksAgo": "hace {w} sem.",
+  "@topologyWeeksAgo": {
+    "placeholders": {
+      "w": {
+        "type": "int"
+      }
+    }
+  },
+  "repeaterTitle": "Gestionar Repetidor",
+  "repeaterConfig": "Configuración Remota",
+  "repeaterApply": "Aplicar",
+  "repeaterNodeName": "Nombre del nodo",
+  "repeaterTxPower": "Potencia TX",
+  "repeaterForwarding": "Reenvío de paquetes",
+  "repeaterForwardingDesc": "Activar o desactivar el reenvío de paquetes",
+  "repeaterAdvertInterval": "Intervalo anuncio local",
+  "repeaterAdvertZeroHop": "Anuncio Auto (Zero Hop)",
+  "repeaterAdvertFlood": "Anuncio Auto (Flood)",
+  "repeaterIntervalMinutes": "Intervalo (minutos)",
+  "repeaterIntervalHours": "Intervalo (horas)",
+  "repeaterMinimalTrafficHint": "Para usar tráfico mínimo de malla, utilice los iconos de actualizar para solicitar solo la información que necesita.",
+  "repeaterValueNotLoaded": "—",
+  "repeaterFloodMax": "Flood máximo (saltos)",
+  "repeaterClearStats": "Limpiar Estadísticas",
+  "repeaterClearStatsDesc": "Reinicia contadores de paquetes y errores",
+  "repeaterNoStats": "Autentícate y pulsa \"Actualizar\" para obtener las estadísticas.",
+  "repeaterFetchStats": "Actualizar",
+  "repeaterAuthenticated": "Autenticado",
+  "repeaterTabStatus": "Estado",
+  "repeaterTabCommandLine": "Línea de comandos",
+  "repeaterTabSettings": "Ajustes",
+  "repeaterCmdHint": "Enviar un comando...",
+  "repeaterCmdEmpty": "Sin comandos enviados. Use el campo de abajo para enviar comandos CLI directamente.",
+  "repeaterCmdClear": "Limpiar historial",
+  "repeaterMenuHelp": "Ayuda de Comandos",
+  "repeaterMenuClearHistory": "Borrar Historial de Comandos",
+  "repeaterHelpTitle": "Ayuda",
+  "repeaterHelpSubtitle": "Comandos del Repetidor",
+  "repeaterHelpFirmwareNote": "Algunos comandos requieren firmware reciente.",
+  "repeaterHelpSearchHint": "Buscar",
+  "dataExportTitle": "Exportar Datos",
+  "dataExportContactsTitle": "Contactos",
+  "dataExportContactsDesc": "{count} contactos guardados",
+  "@dataExportContactsDesc": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "dataExportMessagesTitle": "Mensajes",
+  "dataExportMessagesDesc": "Todas las conversaciones — privadas y canales",
+  "dataExportKmlTitle": "Datos de Mapa",
+  "dataExportKmlDesc": "{count} contactos con GPS",
+  "@dataExportKmlDesc": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "dataExportNote": "Los archivos se exportan directamente a la hoja de compartir.\nNingún dato sale del dispositivo sin tu confirmación.",
+  "dataExportNoContacts": "Sin contactos para exportar",
+  "dataExportNoMessages": "Sin mensajes para exportar",
+  "dataExportNoGps": "Sin contactos con coordenadas GPS",
+  "dataExportFailed": "Error al exportar",
+  "appsDataExportTitle": "Exportar Datos",
+  "appsDataExportSubtitle": "Exporta contactos, mensajes y datos de mapa"
 }

@@ -63,6 +63,203 @@ class AppLocalizationsEn extends AppLocalizations {
   String get commonRename => 'Rename';
 
   @override
+  String get commonReset => 'Reset';
+
+  @override
+  String get commonJustNow => 'just now';
+
+  @override
+  String commonMinutesAgo(int minutes) {
+    return '$minutes min ago';
+  }
+
+  @override
+  String commonHoursAgo(int hours) {
+    return '$hours h ago';
+  }
+
+  @override
+  String get gpsSharingTitle => 'GPS sharing';
+
+  @override
+  String get gpsSharingSubtitle =>
+      'You decide whether your location is broadcast in the radio\'s adverts. Off by default.';
+
+  @override
+  String get gpsSharingStatusOff => 'OFF';
+
+  @override
+  String get gpsSharingStatusManual => 'MANUAL';
+
+  @override
+  String get gpsSharingStatusAuto => 'AUTO';
+
+  @override
+  String get gpsSharingModeOff => 'Off';
+
+  @override
+  String get gpsSharingModeManual => 'Manual';
+
+  @override
+  String get gpsSharingModeAuto => 'Auto';
+
+  @override
+  String get gpsSharingPrecisionTitle => 'Sent precision';
+
+  @override
+  String get gpsSharingPrecisionExact => 'Exact';
+
+  @override
+  String get gpsSharingPrecisionRough => 'Rough';
+
+  @override
+  String get gpsSharingPrecisionVague => 'Vague';
+
+  @override
+  String get gpsSharingIntervalLabel => 'Update interval';
+
+  @override
+  String get gpsSharingShareNow => 'Share now';
+
+  @override
+  String get gpsSharingClearNow => 'Clear from radio';
+
+  @override
+  String get gpsSharingClearedOnRadio => 'Location cleared from the radio.';
+
+  @override
+  String get gpsSharingPrivacyDisclaimer =>
+      'Your position will be included in LoRa adverts your radio transmits and may be visible to other nodes. Only enable this if you accept sharing it.';
+
+  @override
+  String gpsSharingLastShared(Object ago, Object lat, Object lon) {
+    return 'Shared $ago — $lat, $lon';
+  }
+
+  @override
+  String gpsSharingOutcomeOk(Object lat, Object lon) {
+    return '✅ Location sent: $lat, $lon';
+  }
+
+  @override
+  String get gpsSharingOutcomeCleared => 'Location cleared from radio.';
+
+  @override
+  String get gpsSharingOutcomeDisabled => 'GPS sharing is off in Settings.';
+
+  @override
+  String get gpsSharingOutcomeNoPerm => 'Location permission denied.';
+
+  @override
+  String get gpsSharingOutcomeServiceOff => 'Phone location service disabled.';
+
+  @override
+  String get gpsSharingOutcomeNoFix => 'No GPS fix available.';
+
+  @override
+  String get gpsSharingOutcomeDisconnected =>
+      'Radio disconnected — connect first.';
+
+  @override
+  String get gpsSharingOutcomeFailed => 'Failed to send location.';
+
+  @override
+  String get gpsSharingOutcomeSkipped =>
+      'Position unchanged — transmit skipped.';
+
+  @override
+  String get gpsSharingMinMoveLabel => 'Minimum movement';
+
+  @override
+  String get gpsSharingMinMoveAlways => 'Always send';
+
+  @override
+  String get gpsSharingMinMoveHint =>
+      'In Auto mode, only push a new fix if you have moved at least this far since the last send. Saves LoRa air-time.';
+
+  @override
+  String get gpsSharingAdvPolicyTitle => 'Broadcast location in adverts';
+
+  @override
+  String get gpsSharingAdvPolicyNever =>
+      'Off — your adverts will not include coordinates.';
+
+  @override
+  String get gpsSharingAdvPolicyAlways =>
+      'On — every advert will include the radio\'s last known location.';
+
+  @override
+  String gpsSharingAdvPolicyUnknown(Object value) {
+    return 'Radio policy byte $value — unknown value.';
+  }
+
+  @override
+  String get mapVisibilityShowTitle => 'Show on map';
+
+  @override
+  String get mapVisibilityShowSubtitle =>
+      'Hide this contact from your map, even if its adverts include coordinates.';
+
+  @override
+  String get cannedMessagesTitle => 'Canned messages';
+
+  @override
+  String get cannedMessagesSubtitle =>
+      'Library of pre-written replies to send with one tap (or from the widget\'s SOS button).';
+
+  @override
+  String get cannedMessagesAdd => 'Add message';
+
+  @override
+  String get cannedMessagesAddTitle => 'New canned message';
+
+  @override
+  String get cannedMessagesEditTitle => 'Edit canned message';
+
+  @override
+  String get cannedMessagesEmpty => 'No saved messages. Tap + to add one.';
+
+  @override
+  String get cannedMessagesReset => 'Reset to defaults';
+
+  @override
+  String get cannedMessagesResetTitle => 'Reset messages?';
+
+  @override
+  String get cannedMessagesResetConfirm =>
+      'You\'ll lose all changes and restore the original list.';
+
+  @override
+  String get cannedMessagesDeleteTitle => 'Delete message?';
+
+  @override
+  String cannedMessagesDeleteConfirm(Object label) {
+    return 'You will delete “$label”.';
+  }
+
+  @override
+  String get cannedMessagesLabelHint => 'Label (optional)';
+
+  @override
+  String get cannedMessagesTextHint => 'Message text';
+
+  @override
+  String get cannedMessagesEmergencyToggle => 'Emergency message';
+
+  @override
+  String get cannedMessagesEmergencyDesc =>
+      'Used by the widget\'s SOS button. Only one can be flagged.';
+
+  @override
+  String get cannedMessagesPickerTooltip => 'Canned messages';
+
+  @override
+  String get cannedMessagesPickerTitle => 'Insert canned message';
+
+  @override
+  String get cannedMessagesPickerSubtitle => 'Tap to put it into the composer.';
+
+  @override
   String get commonConfirm => 'Confirm';
 
   @override
@@ -322,6 +519,40 @@ class AppLocalizationsEn extends AppLocalizations {
   String get settingsAppearance => 'Appearance';
 
   @override
+  String get settingsTheme => 'Theme';
+
+  @override
+  String get settingsThemeSystem => 'System';
+
+  @override
+  String get settingsThemeLight => 'Light';
+
+  @override
+  String get settingsThemeDark => 'Dark';
+
+  @override
+  String get settingsTextSize => 'Text size';
+
+  @override
+  String get settingsTextSizeDesc =>
+      'Adjust the global text size across the app.';
+
+  @override
+  String get settingsAccent => 'Accent color';
+
+  @override
+  String get settingsAccentDefault => 'Default (brand orange)';
+
+  @override
+  String get settingsAccentCustom => 'Custom';
+
+  @override
+  String get settingsAccentReset => 'Reset to default';
+
+  @override
+  String get settingsMentionColors => 'Mention colors';
+
+  @override
   String get settingsSelfMention => 'Self mention (@[You])';
 
   @override
@@ -350,10 +581,107 @@ class AppLocalizationsEn extends AppLocalizations {
   String get settingsPrivateMessages => 'Private messages';
 
   @override
+  String get settingsPrivateMessagesDesc =>
+      'Notify when you receive a direct message';
+
+  @override
   String get settingsChannelMessages => 'Channel messages';
 
   @override
+  String get settingsChannelMessagesDesc => 'Notify for channel messages';
+
+  @override
+  String get settingsChannelMentionsOnly => 'Mentions only';
+
+  @override
+  String get settingsChannelMentionsOnlyDesc =>
+      'Only notify when a channel message mentions your name';
+
+  @override
   String get settingsBackgroundOnly => 'Background only';
+
+  @override
+  String get settingsBackgroundOnlyDesc =>
+      'Only notify when the app is not in the foreground';
+
+  @override
+  String settingsSosDesc(Object gps) {
+    return 'Configure the destination and emergency message. Use \'$gps\' in the text to insert coordinates.';
+  }
+
+  @override
+  String get settingsSosTarget => 'SOS destination';
+
+  @override
+  String get settingsSosTargetChannel => 'Channel';
+
+  @override
+  String get settingsSosTargetPrivateContact => 'Private contact';
+
+  @override
+  String get settingsSosChannelLabel => 'Send channel';
+
+  @override
+  String get settingsSosGeneralChannel => '#0 General';
+
+  @override
+  String get settingsSosDestinationContact => 'Destination contact';
+
+  @override
+  String get settingsSosNoContactsAvailable => 'No contacts available';
+
+  @override
+  String get settingsSosTapToSearchContact => 'Tap to search for a contact';
+
+  @override
+  String get settingsSosClearContact => 'Clear contact';
+
+  @override
+  String get settingsSosMessage => 'SOS message';
+
+  @override
+  String settingsSosMessageHint(Object gps) {
+    return 'E.g. SOS - I need help! \'$gps\'';
+  }
+
+  @override
+  String get settingsSosIncludeGps => 'Include phone GPS coordinates';
+
+  @override
+  String get settingsSosIncludeGpsDesc =>
+      'If GPS or permission is unavailable, the message is sent without coordinates.';
+
+  @override
+  String get settingsSosSendNow => 'Send SOS now';
+
+  @override
+  String get settingsSosSent => 'SOS sent';
+
+  @override
+  String get settingsSosRadioNotConnected => 'Radio not connected';
+
+  @override
+  String get settingsSosMissingContact => 'SOS contact not configured/found';
+
+  @override
+  String get settingsSosSendFailed => 'Failed to send SOS';
+
+  @override
+  String settingsSosSendFailedDetail(Object detail) {
+    return 'SOS failed: $detail';
+  }
+
+  @override
+  String get settingsSosSearchContact => 'Search SOS contact';
+
+  @override
+  String get settingsSosSearchHint => 'Name or short ID';
+
+  @override
+  String get settingsSosNoContactFound => 'No contacts found';
+
+  @override
+  String get settingsSosUnnamedChannel => '(unnamed)';
 
   @override
   String get settingsPrivateKeyCopy => 'Private Key Backup';
@@ -1021,6 +1349,12 @@ class AppLocalizationsEn extends AppLocalizations {
   String get connectTapHint => 'Tap \"Search\" to find devices';
 
   @override
+  String get connectSectionBluetooth => 'BLUETOOTH';
+
+  @override
+  String get connectSectionSerial => 'USB / SERIAL';
+
+  @override
   String get connectDeviceBLE => '(Bluetooth LE)';
 
   @override
@@ -1028,6 +1362,29 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get connectDeviceKISS => '(KISS TNC)';
+
+  @override
+  String get connectDeviceWebUSB => 'Web USB — Companion';
+
+  @override
+  String get connectDeviceWebKISS => 'Web USB — KISS TNC';
+
+  @override
+  String get connectWebUsbButton => 'Connect via USB (Web Serial)';
+
+  @override
+  String get connectWebUsbScanning => 'Selecting USB port...';
+
+  @override
+  String get connectWebUsbHint =>
+      'Supported on Chrome and Edge. The browser will show a USB port selector.';
+
+  @override
+  String get connectWebUsbExpiredMessage =>
+      'USB port unavailable (page was refreshed). Please select the device again.';
+
+  @override
+  String get connectWebUsbAction => 'Connect via USB';
 
   @override
   String get connectStepConnecting => 'Connecting...';
@@ -1102,6 +1459,60 @@ class AppLocalizationsEn extends AppLocalizations {
   @override
   String get discoverNoneHint =>
       'Contacts appear while transmitting on the network';
+
+  @override
+  String get discoverCleanTooltip => 'Clean local-only contacts';
+
+  @override
+  String get discoverCleanSheetTitle => 'Clean local-only contacts';
+
+  @override
+  String get discoverCleanSheetSubtitle =>
+      'Pick which discovered contacts to remove. Contacts stored on the radio are always kept.';
+
+  @override
+  String get discoverCleanOption48h => 'Not heard in 48 hours';
+
+  @override
+  String get discoverCleanOption7d => 'Not heard in 7 days';
+
+  @override
+  String get discoverCleanOption30d => 'Not heard in 30 days';
+
+  @override
+  String get discoverCleanOptionNever => 'Never heard (no advert)';
+
+  @override
+  String get discoverCleanOptionAll => 'All local-only contacts';
+
+  @override
+  String get discoverCleanTitle => 'Clean discovered contacts?';
+
+  @override
+  String discoverCleanBody(int n) {
+    String _temp0 = intl.Intl.pluralLogic(
+      n,
+      locale: localeName,
+      other: '$n contacts',
+      one: '1 contact',
+    );
+    return 'This will remove $_temp0 that are not stored on the radio. Contacts saved on the radio are kept.';
+  }
+
+  @override
+  String get discoverCleanNothing =>
+      'All discovered contacts are saved on the radio. Nothing to clean.';
+
+  @override
+  String discoverCleanDone(int n) {
+    String _temp0 = intl.Intl.pluralLogic(
+      n,
+      locale: localeName,
+      other: 'Removed $n contacts',
+      one: 'Removed 1 contact',
+    );
+    return '$_temp0';
+  }
 
   @override
   String get discoverSaveToRadio => 'Save to radio';
@@ -1232,6 +1643,24 @@ class AppLocalizationsEn extends AppLocalizations {
   String get mapFinal => 'Final:';
 
   @override
+  String get mapLegendTitle => 'Legend';
+
+  @override
+  String get mapLegendCompanion => 'Companion';
+
+  @override
+  String get mapLegendRepeater => 'Repeater';
+
+  @override
+  String get mapLegendRoom => 'Room';
+
+  @override
+  String get mapLegendSensor => 'Sensor';
+
+  @override
+  String get mapLegendYou => 'You';
+
+  @override
   String get mapAttribution => 'MeshCore Portugal';
 
   @override
@@ -1324,7 +1753,7 @@ class AppLocalizationsEn extends AppLocalizations {
   String get radioSettingsContacts => 'Contacts';
 
   @override
-  String get radioSettingsDiscovered => 'Discovered';
+  String get radioSettingsDiscovered => 'Local contacts';
 
   @override
   String get radioSettingsAppVersion => 'App Version';
@@ -1392,6 +1821,48 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get radioSettingsResetValues => 'Reset to current values';
+
+  @override
+  String get radioSettingsExperimentalTitle => 'Experimental';
+
+  @override
+  String get radioSettingsExperimentalWarning =>
+      'Use with caution — these settings affect on-air compatibility with other nodes.';
+
+  @override
+  String get radioSettingsPathHashMode => 'Path hash size';
+
+  @override
+  String get radioSettingsPathHashModeDesc =>
+      'Number of bytes used per hop in the routing path. Larger values lower the chance of two distant nodes colliding on the same hash. Requires firmware v10+. Default: 1 byte.';
+
+  @override
+  String get radioSettingsPathHashMode1 => '1 byte';
+
+  @override
+  String get radioSettingsPathHashMode2 => '2 bytes';
+
+  @override
+  String get radioSettingsPathHashMode3 => '3 bytes';
+
+  @override
+  String get radioSettingsPathHashModeCaptionDefault =>
+      '1 byte per hop — default, compatible with all firmwares.';
+
+  @override
+  String get radioSettingsPathHashModeCaptionExperimental =>
+      'Experimental — only nodes running firmware v10+ will route this packet correctly.';
+
+  @override
+  String get radioSettingsPathHashModeUnsupported =>
+      'Not supported by this firmware.';
+
+  @override
+  String get radioSettingsPathHashModeSaved => 'Path hash size updated';
+
+  @override
+  String get radioSettingsPathHashModeFailed =>
+      'Failed to update path hash size';
 
   @override
   String get radioSettingsAutoAddTitle => 'Contact Settings';
@@ -1868,4 +2339,263 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get urlOpenConfirm => 'Open';
+
+  @override
+  String get topologyScreenTitle => 'Network Topology';
+
+  @override
+  String get topologyTabGraph => 'Graph';
+
+  @override
+  String get topologyTabTimeline => 'Timeline';
+
+  @override
+  String get topologyEmptyTitle => 'No topology data';
+
+  @override
+  String get topologyEmptyHint =>
+      'Connect to a radio to\nvisualize the network';
+
+  @override
+  String get topologySelf => 'Me';
+
+  @override
+  String get topologyResetView => 'Reset view';
+
+  @override
+  String get topologySnrGood => 'SNR ≥ 5 dB';
+
+  @override
+  String get topologySnrMid => 'SNR 0–5 dB';
+
+  @override
+  String get topologySnrBad => 'SNR < 0 dB';
+
+  @override
+  String get topologyLabelId => 'ID';
+
+  @override
+  String get topologyLabelPath => 'Path';
+
+  @override
+  String get topologyLabelSeen => 'Seen';
+
+  @override
+  String topologySecondsAgo(int s) {
+    return '${s}s ago';
+  }
+
+  @override
+  String topologyMinutesAgo(int min) {
+    return '${min}min ago';
+  }
+
+  @override
+  String topologyHoursAgo(int h) {
+    return '${h}h ago';
+  }
+
+  @override
+  String topologyDaysAgo(int d) {
+    return '${d}d ago';
+  }
+
+  @override
+  String topologyWeeksAgo(int w) {
+    return '${w}w ago';
+  }
+
+  @override
+  String get topologyFilterRecent => 'Show only contacts on radio';
+
+  @override
+  String get topologyFilterAll => 'Show all (including local-only)';
+
+  @override
+  String get topologyToggleLabels => 'Toggle labels';
+
+  @override
+  String topologyNodesShown(int shown, int total) {
+    return '$shown/$total nodes';
+  }
+
+  @override
+  String get topologyHopDirect => 'Direct';
+
+  @override
+  String get topologyHop1 => '1 hop';
+
+  @override
+  String get topologyHop2 => '2 hops';
+
+  @override
+  String get topologyHopFlood => 'Flood / 3+';
+
+  @override
+  String get topologyTabPaths => 'Paths';
+
+  @override
+  String get topologyPathsEmptyTitle => 'No path data';
+
+  @override
+  String get topologyPathsEmptyHint =>
+      'Run a trace from a contact\nto see its routing path';
+
+  @override
+  String topologyPathsCount(int n) {
+    String _temp0 = intl.Intl.pluralLogic(
+      n,
+      locale: localeName,
+      other: '$n paths',
+      one: '1 path',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String get repeaterTitle => 'Manage Repeater';
+
+  @override
+  String get repeaterConfig => 'Remote Configuration';
+
+  @override
+  String get repeaterApply => 'Apply';
+
+  @override
+  String get repeaterNodeName => 'Node name';
+
+  @override
+  String get repeaterTxPower => 'TX Power';
+
+  @override
+  String get repeaterForwarding => 'Packet forwarding';
+
+  @override
+  String get repeaterForwardingDesc => 'Enable or disable packet forwarding';
+
+  @override
+  String get repeaterAdvertInterval => 'Local advert interval';
+
+  @override
+  String get repeaterAdvertZeroHop => 'Auto Advert (Zero Hop)';
+
+  @override
+  String get repeaterAdvertFlood => 'Auto Advert (Flood)';
+
+  @override
+  String get repeaterIntervalMinutes => 'Interval (minutes)';
+
+  @override
+  String get repeaterIntervalHours => 'Interval (hours)';
+
+  @override
+  String get repeaterMinimalTrafficHint =>
+      'To use minimal mesh traffic, please use the refresh icons to request the info you need.';
+
+  @override
+  String get repeaterValueNotLoaded => '—';
+
+  @override
+  String get repeaterFloodMax => 'Max flood hops';
+
+  @override
+  String get repeaterClearStats => 'Clear Statistics';
+
+  @override
+  String get repeaterClearStatsDesc => 'Resets packet and error counters';
+
+  @override
+  String get repeaterNoStats =>
+      'Authenticate and press \"Refresh\" to fetch repeater statistics.';
+
+  @override
+  String get repeaterFetchStats => 'Refresh';
+
+  @override
+  String get repeaterAuthenticated => 'Authenticated';
+
+  @override
+  String get repeaterTabStatus => 'Status';
+
+  @override
+  String get repeaterTabCommandLine => 'Command Line';
+
+  @override
+  String get repeaterTabSettings => 'Settings';
+
+  @override
+  String get repeaterCmdHint => 'Send a command...';
+
+  @override
+  String get repeaterCmdEmpty =>
+      'No commands sent yet. Use the input below to send raw CLI commands.';
+
+  @override
+  String get repeaterCmdClear => 'Clear history';
+
+  @override
+  String get repeaterMenuHelp => 'Command Help';
+
+  @override
+  String get repeaterMenuClearHistory => 'Delete Command History';
+
+  @override
+  String get repeaterHelpTitle => 'Help';
+
+  @override
+  String get repeaterHelpSubtitle => 'Repeater Commands';
+
+  @override
+  String get repeaterHelpFirmwareNote =>
+      'Some commands require the latest firmware.';
+
+  @override
+  String get repeaterHelpSearchHint => 'Search';
+
+  @override
+  String get dataExportTitle => 'Data Export';
+
+  @override
+  String get dataExportContactsTitle => 'Contacts';
+
+  @override
+  String dataExportContactsDesc(int count) {
+    return '$count contacts stored';
+  }
+
+  @override
+  String get dataExportMessagesTitle => 'Messages';
+
+  @override
+  String get dataExportMessagesDesc => 'All conversations — private & channels';
+
+  @override
+  String get dataExportKmlTitle => 'Map Data';
+
+  @override
+  String dataExportKmlDesc(int count) {
+    return '$count contacts with GPS';
+  }
+
+  @override
+  String get dataExportNote =>
+      'Files are exported directly to the share sheet.\nNo data leaves the device unless you choose to share it.';
+
+  @override
+  String get dataExportNoContacts => 'No contacts to export';
+
+  @override
+  String get dataExportNoMessages => 'No messages to export';
+
+  @override
+  String get dataExportNoGps => 'No contacts with GPS coordinates';
+
+  @override
+  String get dataExportFailed => 'Export failed';
+
+  @override
+  String get appsDataExportTitle => 'Data Export';
+
+  @override
+  String get appsDataExportSubtitle => 'Export contacts, messages & map data';
 }

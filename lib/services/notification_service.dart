@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter/foundation.dart';
 import 'package:flutter/widgets.dart';
 import 'package:flutter_local_notifications/flutter_local_notifications.dart';
@@ -36,6 +38,12 @@ class NotificationService {
   final _plugin = FlutterLocalNotificationsPlugin();
   bool _initialized = false;
   int _nextId = 0;
+
+  /// Called when the user taps a notification while the app is running or
+  /// resumes from background.  Set this from main.dart after the router is
+  /// ready.  Receives the payload string, e.g. "private:<keyHex>" or
+  /// "channel:<index>".
+  static void Function(String payload)? onTap;
 
   /// Notification settings, loaded from storage and kept in sync by
   /// [NotificationSettingsNotifier].  Updated externally via [settings].
@@ -89,7 +97,15 @@ class NotificationService {
         return;
     }
 
-    await _plugin.initialize(initSettings);
+    await _plugin.initialize(
+      initSettings,
+      onDidReceiveNotificationResponse: (details) {
+        final payload = details.payload;
+        if (payload != null && payload.isNotEmpty) {
+          NotificationService.onTap?.call(payload);
+        }
+      },
+    );
 
     // Create Android notification channels once.
     if (defaultTargetPlatform == TargetPlatform.android) {
@@ -182,11 +198,14 @@ class NotificationService {
   ///
   /// [senderName] — display name of the sender.
   /// [text] — message body (may be empty for non-text messages).
+  /// [senderKeyHex] — full hex public key of the sender; used as navigation
+  ///   payload so tapping the notification opens the correct chat.
   /// [isAppInForeground] — pass the current app lifecycle state to honour the
   ///   "only when background" setting.
   Future<void> showPrivateMessage({
     required String senderName,
     required String text,
+    String? senderKeyHex,
     bool isAppInForeground = false,
   }) async {
     if (!_shouldSend(
@@ -199,19 +218,24 @@ class NotificationService {
     await _show(
       title: senderName,
       body: text.isNotEmpty ? text : '(mensagem recebida)',
+      payload: senderKeyHex != null ? 'private:$senderKeyHex' : null,
     );
   }
 
   /// Show a notification for an incoming channel message.
   ///
   /// [channelName] — name of the channel (may be 'Canal N' if unnamed).
+  /// [channelIndex] — channel slot index; used as navigation payload.
   /// [senderName] — display name of the sender.
   /// [text] — message body.
+  /// [isMentioned] — true when the message text contains a mention of the user.
   Future<void> showChannelMessage({
     required String channelName,
     required String senderName,
     required String text,
+    int? channelIndex,
     bool isAppInForeground = false,
+    bool isMentioned = false,
   }) async {
     if (!_shouldSend(
       categoryEnabled: _settings.channelMessages,
@@ -219,10 +243,12 @@ class NotificationService {
     )) {
       return;
     }
+    if (_settings.channelMentionsOnly && !isMentioned) return;
 
     await _show(
       title: channelName,
       body: '$senderName: ${text.isNotEmpty ? text : "(mensagem)"}',
+      payload: channelIndex != null ? 'channel:$channelIndex' : null,
     );
   }
 
@@ -345,6 +371,16 @@ class NotificationService {
     );
   }
 
+  /// Returns the payload string from the notification that launched the app
+  /// (cold-start / killed-state tap), or null if the app was not launched via
+  /// a notification.  Call this once during startup, after [init].
+  Future<String?> getAppLaunchPayload() async {
+    if (!_initialized || kIsWeb) return null;
+    final details = await _plugin.getNotificationAppLaunchDetails();
+    if (details == null || !details.didNotificationLaunchApp) return null;
+    return details.notificationResponse?.payload;
+  }
+
   /// Cancel all Plan 3-3-3 scheduled notifications.
   Future<void> cancelPlan333Alerts() async {
     if (!_initialized || kIsWeb) return;
@@ -369,7 +405,11 @@ class NotificationService {
     return true;
   }
 
-  Future<void> _show({required String title, required String body}) async {
+  Future<void> _show({
+    required String title,
+    required String body,
+    String? payload,
+  }) async {
     const androidDetails = AndroidNotificationDetails(
       _androidChannelId,
       _androidChannelName,
@@ -381,13 +421,13 @@ class NotificationService {
       presentAlert: true,
       presentSound: true,
     );
-    const details = NotificationDetails(
+    final details = NotificationDetails(
       android: androidDetails,
       iOS: iosDetails,
       macOS: iosDetails,
     );
 
-    await _plugin.show(_nextId++, title, body, details);
+    await _plugin.show(_nextId++, title, body, details, payload: payload);
   }
 }
 
@@ -397,11 +437,15 @@ class NotificationService {
 /// Register once with [WidgetsBinding.instance.addObserver] in main.dart.
 class AppLifecycleObserver extends WidgetsBindingObserver {
   static AppLifecycleState _state = AppLifecycleState.resumed;
+  static final _stateController =
+      StreamController<AppLifecycleState>.broadcast();
 
   static bool get isInForeground => _state == AppLifecycleState.resumed;
+  static Stream<AppLifecycleState> get stateChanges => _stateController.stream;
 
   @override
   void didChangeAppLifecycleState(AppLifecycleState state) {
     _state = state;
+    _stateController.add(state);
   }
 }

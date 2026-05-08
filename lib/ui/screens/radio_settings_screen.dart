@@ -7,6 +7,10 @@ import '../../protocol/protocol.dart';
 import '../../providers/radio_providers.dart';
 import 'discover_contacts_screen.dart';
 
+part 'parts/radio_summary_card.dart';
+part 'parts/radio_device_info_card.dart';
+part 'parts/radio_advert_card.dart';
+
 /// Drill-down page for radio configuration and telemetry.
 ///
 /// Accessed from Settings → Rádio. Shows config summary, device info,
@@ -180,7 +184,7 @@ class _RadioSettingsScreenState extends ConsumerState<RadioSettingsScreen> {
     final config = ref.watch(radioConfigProvider);
     final deviceInfo = ref.watch(deviceInfoProvider);
     final selfInfo = ref.watch(selfInfoProvider);
-    final contacts = ref.watch(contactsProvider);
+    final radioContactsSnapshot = ref.watch(radioContactsSnapshotProvider);
     final channels = ref.watch(channelsProvider);
     final discovered = ref.watch(discoveredContactsProvider);
     final theme = Theme.of(context);
@@ -214,7 +218,7 @@ class _RadioSettingsScreenState extends ConsumerState<RadioSettingsScreen> {
                 _DeviceInfoCard(
                   selfInfo: selfInfo,
                   deviceInfo: deviceInfo,
-                  contactCount: contacts.length,
+                  contactCount: radioContactsSnapshot.length,
                   activeChannelCount: channels.where((c) => !c.isEmpty).length,
                   discoveredCount: discovered.length,
                   appVersion: _appVersion,
@@ -456,6 +460,10 @@ class _RadioSettingsScreenState extends ConsumerState<RadioSettingsScreen> {
               // ----- Advert auto-add settings -----
               const SizedBox(height: 24),
               const _AdvertAutoAddCard(),
+
+              // ----- Experimental settings -----
+              const SizedBox(height: 24),
+              const _ExperimentalCard(),
             ],
           ),
         ),
@@ -464,120 +472,73 @@ class _RadioSettingsScreenState extends ConsumerState<RadioSettingsScreen> {
   }
 }
 
-// ---------------------------------------------------------------------------
-// Compact config summary card
-// ---------------------------------------------------------------------------
+/// Experimental, firmware-specific settings. Currently exposes the
+/// `path_hash_mode` byte (firmware v10+, companion radio firmware) which
+/// switches the per-hop path hash size between 1, 2 or 3 bytes.
+class _ExperimentalCard extends ConsumerStatefulWidget {
+  const _ExperimentalCard();
 
-class _ConfigSummaryCard extends StatelessWidget {
-  const _ConfigSummaryCard({required this.config});
-  final RadioConfig config;
+  @override
+  ConsumerState<_ExperimentalCard> createState() => _ExperimentalCardState();
+}
+
+class _ExperimentalCardState extends ConsumerState<_ExperimentalCard> {
+  bool _saving = false;
+
+  Future<void> _setPathHashMode(int mode) async {
+    final l10n = context.l10n;
+    final service = ref.read(radioServiceProvider);
+    if (service == null) {
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text(l10n.commonRadioDisconnected)));
+      return;
+    }
+    setState(() => _saving = true);
+    try {
+      await service.setPathHashMode(mode);
+      // Optimistically update the cached DeviceInfo so the chooser reflects
+      // the new value without waiting for a fresh DeviceQuery roundtrip.
+      final current = ref.read(deviceInfoProvider);
+      if (current != null) {
+        ref.read(deviceInfoProvider.notifier).state = DeviceInfo(
+          firmwareVersion: current.firmwareVersion,
+          deviceName: current.deviceName,
+          batteryMillivolts: current.batteryMillivolts,
+          storageUsed: current.storageUsed,
+          storageTotal: current.storageTotal,
+          maxContacts: current.maxContacts,
+          maxChannels: current.maxChannels,
+          blePin: current.blePin,
+          firmwareBuild: current.firmwareBuild,
+          model: current.model,
+          versionString: current.versionString,
+          clientRepeat: current.clientRepeat,
+          pathHashMode: mode,
+        );
+      }
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text(l10n.radioSettingsPathHashModeSaved)),
+      );
+    } catch (_) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text(l10n.radioSettingsPathHashModeFailed)),
+      );
+    } finally {
+      if (mounted) setState(() => _saving = false);
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
-    final theme = Theme.of(context);
-    final freqMHz = config.frequencyHz / 1e3;
-    final bwKHz = config.bandwidthHz / 1e3;
-
-    return Card(
-      color: theme.colorScheme.primaryContainer,
-      child: Padding(
-        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Row(
-              children: [
-                Icon(
-                  Icons.radio,
-                  size: 18,
-                  color: theme.colorScheme.onPrimaryContainer,
-                ),
-                const SizedBox(width: 8),
-                Text(
-                  context.l10n.radioSettingsActiveConfig,
-                  style: theme.textTheme.labelLarge?.copyWith(
-                    color: theme.colorScheme.onPrimaryContainer,
-                    fontWeight: FontWeight.bold,
-                  ),
-                ),
-              ],
-            ),
-            const SizedBox(height: 10),
-            _ConfigRow(
-              label: context.l10n.radioSettingsFreqLabel,
-              value: '${freqMHz.toStringAsFixed(4)} MHz',
-            ),
-            _ConfigRow(
-              label: context.l10n.radioSettingsBandwidth,
-              value: '${bwKHz % 1 == 0 ? bwKHz.toInt() : bwKHz} kHz',
-            ),
-            _ConfigRow(
-              label: context.l10n.radioSettingsSpreadingFactor,
-              value: 'SF${config.spreadingFactor}',
-            ),
-            _ConfigRow(
-              label: context.l10n.radioSettingsCodingRate,
-              value: _crLabel(config.codingRate),
-            ),
-            _ConfigRow(
-              label: context.l10n.radioSettingsTxPower,
-              value: '${config.txPowerDbm} dBm',
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-
-  String _crLabel(int cr) {
-    switch (cr) {
-      case 5:
-        return '4/5';
-      case 6:
-        return '4/6';
-      case 7:
-        return '4/7';
-      case 8:
-        return '4/8';
-      default:
-        return 'CR$cr';
-    }
-  }
-}
-
-// ---------------------------------------------------------------------------
-// Device info card
-// ---------------------------------------------------------------------------
-
-class _DeviceInfoCard extends ConsumerWidget {
-  const _DeviceInfoCard({
-    required this.selfInfo,
-    required this.deviceInfo,
-    required this.contactCount,
-    required this.activeChannelCount,
-    required this.discoveredCount,
-    required this.appVersion,
-  });
-
-  final SelfInfo? selfInfo;
-  final DeviceInfo? deviceInfo;
-  final int contactCount;
-  final int activeChannelCount;
-  final int discoveredCount;
-  final String appVersion;
-
-  @override
-  Widget build(BuildContext context, WidgetRef ref) {
-    final theme = Theme.of(context);
     final l10n = context.l10n;
-    final maxChannels = deviceInfo?.maxChannels;
-    final maxContacts = deviceInfo?.maxContacts;
-    final (storageUsed, storageTotal) = ref.watch(storageProvider);
-
-    String _kbStr(int bytes) {
-      if (bytes < 1024) return '${bytes}b';
-      return '${(bytes / 1024).toStringAsFixed(0)}kb';
-    }
+    final theme = Theme.of(context);
+    final deviceInfo = ref.watch(deviceInfoProvider);
+    // path_hash_mode is reported only by firmware v10+ companion radio.
+    final supported = deviceInfo?.pathHashMode != null;
+    final mode = deviceInfo?.pathHashMode ?? 0;
 
     return Card(
       child: Padding(
@@ -585,488 +546,103 @@ class _DeviceInfoCard extends ConsumerWidget {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Text(
-              l10n.radioSettingsDevice,
-              style: theme.textTheme.titleSmall?.copyWith(
-                color: theme.colorScheme.primary,
-                fontWeight: FontWeight.bold,
-              ),
-            ),
-            const SizedBox(height: 8),
-
-            // Radio identity rows
-            if (selfInfo != null)
-              _InfoRow(label: l10n.commonName, value: selfInfo!.name),
-            if (deviceInfo != null) ...[
-              _InfoRow(
-                label: l10n.radioSettingsModel,
-                value: deviceInfo!.model ?? deviceInfo!.deviceName,
-              ),
-              _InfoRow(
-                label: l10n.radioSettingsFirmware,
-                value:
-                    deviceInfo!.versionString ??
-                    'v${deviceInfo!.firmwareVersion}',
-              ),
-            ],
-
-            const SizedBox(height: 12),
-            const Divider(height: 1),
-            const SizedBox(height: 12),
-
-            // Capacity indicators row
             Row(
               children: [
                 Icon(
-                  Icons.info_outline,
-                  size: 20,
-                  color: theme.colorScheme.primary,
-                ),
-                const SizedBox(width: 10),
-                Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      _CapacityRow(
-                        label: l10n.radioSettingsChannels,
-                        used: activeChannelCount,
-                        max: maxChannels,
-                      ),
-                      const SizedBox(height: 4),
-                      _CapacityRow(
-                        label: l10n.radioSettingsContacts,
-                        used: contactCount,
-                        max: maxContacts,
-                      ),
-                      const SizedBox(height: 4),
-                      _CapacityRow(
-                        label: l10n.radioSettingsDiscovered,
-                        used: discoveredCount,
-                        max: null,
-                      ),
-                    ],
-                  ),
-                ),
-              ],
-            ),
-
-            // Storage
-            if (storageUsed != null && storageTotal != null) ...[
-              const SizedBox(height: 12),
-              const Divider(height: 1),
-              const SizedBox(height: 12),
-              Row(
-                children: [
-                  Icon(
-                    Icons.sd_storage,
-                    size: 20,
-                    color: theme.colorScheme.primary,
-                  ),
-                  const SizedBox(width: 10),
-                  Expanded(
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Text(
-                          l10n.radioSettingsStorage,
-                          style: theme.textTheme.bodySmall?.copyWith(
-                            color: theme.colorScheme.onSurface.withAlpha(140),
-                          ),
-                        ),
-                        const SizedBox(height: 4),
-                        Row(
-                          children: [
-                            Expanded(
-                              child: ClipRRect(
-                                borderRadius: BorderRadius.circular(4),
-                                child: LinearProgressIndicator(
-                                  value:
-                                      storageTotal > 0
-                                          ? storageUsed / storageTotal
-                                          : 0,
-                                  minHeight: 6,
-                                  backgroundColor:
-                                      theme.colorScheme.surfaceContainerHighest,
-                                ),
-                              ),
-                            ),
-                            const SizedBox(width: 8),
-                            Text(
-                              '${_kbStr(storageUsed)} / ${_kbStr(storageTotal)}',
-                              style: theme.textTheme.bodySmall,
-                            ),
-                          ],
-                        ),
-                      ],
-                    ),
-                  ),
-                ],
-              ),
-            ],
-
-            // App version
-            if (appVersion.isNotEmpty) ...[
-              const SizedBox(height: 12),
-              const Divider(height: 1),
-              const SizedBox(height: 8),
-              _InfoRow(label: l10n.radioSettingsAppVersion, value: appVersion),
-            ],
-          ],
-        ),
-      ),
-    );
-  }
-}
-
-class _CapacityRow extends StatelessWidget {
-  const _CapacityRow({
-    required this.label,
-    required this.used,
-    required this.max,
-  });
-
-  final String label;
-  final int used;
-  final int? max;
-
-  @override
-  Widget build(BuildContext context) {
-    final theme = Theme.of(context);
-    final valueText = max != null ? '$used/$max' : '$used';
-    return Row(
-      children: [
-        SizedBox(
-          width: 100,
-          child: Text(
-            label,
-            style: theme.textTheme.bodySmall?.copyWith(
-              color: theme.colorScheme.onSurface.withAlpha(140),
-            ),
-          ),
-        ),
-        Text(
-          valueText,
-          style: theme.textTheme.bodyMedium?.copyWith(
-            fontWeight: FontWeight.w600,
-          ),
-        ),
-      ],
-    );
-  }
-}
-
-class _ConfigRow extends StatelessWidget {
-  const _ConfigRow({required this.label, required this.value});
-  final String label;
-  final String value;
-
-  @override
-  Widget build(BuildContext context) {
-    final theme = Theme.of(context);
-    final color = theme.colorScheme.onPrimaryContainer;
-    return Padding(
-      padding: const EdgeInsets.symmetric(vertical: 4),
-      child: Row(
-        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-        children: [
-          Text(
-            label,
-            style: theme.textTheme.bodyMedium?.copyWith(color: color),
-          ),
-          Text(
-            value,
-            style: theme.textTheme.bodyMedium?.copyWith(
-              color: color,
-              fontWeight: FontWeight.w600,
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-}
-
-class _InfoRow extends StatelessWidget {
-  const _InfoRow({required this.label, required this.value});
-  final String label;
-  final String value;
-
-  @override
-  Widget build(BuildContext context) {
-    final theme = Theme.of(context);
-    return Padding(
-      padding: const EdgeInsets.symmetric(vertical: 3),
-      child: Row(
-        children: [
-          SizedBox(
-            width: 120,
-            child: Text(
-              label,
-              style: theme.textTheme.bodySmall?.copyWith(
-                color: theme.colorScheme.onSurface.withAlpha(140),
-              ),
-            ),
-          ),
-          Expanded(child: Text(value, style: theme.textTheme.bodyMedium)),
-        ],
-      ),
-    );
-  }
-}
-
-// ---------------------------------------------------------------------------
-// Advert auto-add card
-// ---------------------------------------------------------------------------
-
-class _AdvertAutoAddCard extends ConsumerStatefulWidget {
-  const _AdvertAutoAddCard();
-
-  @override
-  ConsumerState<_AdvertAutoAddCard> createState() => _AdvertAutoAddCardState();
-}
-
-class _AdvertAutoAddCardState extends ConsumerState<_AdvertAutoAddCard> {
-  final _maxHopsCtrl = TextEditingController();
-  bool _maxHopsInitialized = false;
-
-  @override
-  void dispose() {
-    _maxHopsCtrl.dispose();
-    super.dispose();
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    final theme = Theme.of(context);
-    final l10n = context.l10n;
-    final s = ref.watch(advertAutoAddProvider);
-    final n = ref.read(advertAutoAddProvider.notifier);
-
-    // Sync max-hops field once after the settings are loaded.
-    if (!_maxHopsInitialized) {
-      _maxHopsInitialized = true;
-      _maxHopsCtrl.text = s.maxHops != null ? '${s.maxHops}' : '';
-    }
-
-    return Card(
-      child: Padding(
-        padding: const EdgeInsets.all(16),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            // ── Title ──────────────────────────────────────────────────────
-            Row(
-              children: [
-                Icon(
-                  Icons.person_add_alt_1,
+                  Icons.science_outlined,
                   size: 18,
-                  color: theme.colorScheme.primary,
+                  color: theme.colorScheme.tertiary,
                 ),
-                const SizedBox(width: 8),
+                const SizedBox(width: 6),
                 Text(
-                  l10n.radioSettingsAutoAddTitle,
+                  l10n.radioSettingsExperimentalTitle,
                   style: theme.textTheme.titleSmall?.copyWith(
-                    color: theme.colorScheme.primary,
+                    color: theme.colorScheme.tertiary,
                     fontWeight: FontWeight.bold,
                   ),
                 ),
               ],
             ),
-            const SizedBox(height: 12),
-
-            // ── Auto Add All ───────────────────────────────────────────────
-            RadioListTile<bool>(
-              dense: true,
-              contentPadding: EdgeInsets.zero,
-              title: Text(
-                l10n.radioSettingsAutoAddAll,
-                style: theme.textTheme.bodyMedium?.copyWith(
-                  fontWeight: FontWeight.w600,
-                ),
-              ),
-              subtitle: Text(
-                l10n.radioSettingsAutoAddAllDesc,
-                style: theme.textTheme.bodySmall,
-              ),
-              value: true,
-              groupValue: s.addAll,
-              onChanged: (_) => n.setAddAll(true),
-            ),
-
-            // ── Auto Add Selected ──────────────────────────────────────────
-            RadioListTile<bool>(
-              dense: true,
-              contentPadding: EdgeInsets.zero,
-              title: Text(
-                l10n.radioSettingsAutoAddSelected,
-                style: theme.textTheme.bodyMedium?.copyWith(
-                  fontWeight: FontWeight.w600,
-                ),
-              ),
-              subtitle: Text(
-                l10n.radioSettingsAutoAddSelectedDesc,
-                style: theme.textTheme.bodySmall,
-              ),
-              value: false,
-              groupValue: s.addAll,
-              onChanged: (_) => n.setAddAll(false),
-            ),
-
-            // Per-type checkboxes — only relevant in "selected" mode.
-            AnimatedOpacity(
-              opacity: s.addAll ? 0.4 : 1.0,
-              duration: const Duration(milliseconds: 200),
-              child: Column(
-                children: [
-                  _TypeCheckTile(
-                    icon: Icons.person,
-                    label: l10n.radioSettingsAutoAddCompanion,
-                    value: s.addChat,
-                    onChanged: s.addAll ? null : n.setChat,
-                  ),
-                  _TypeCheckTile(
-                    icon: Icons.cell_tower,
-                    label: l10n.radioSettingsAutoAddRepeater,
-                    value: s.addRepeater,
-                    onChanged: s.addAll ? null : n.setRepeater,
-                  ),
-                  _TypeCheckTile(
-                    icon: Icons.meeting_room,
-                    label: l10n.radioSettingsAutoAddRoom,
-                    value: s.addRoom,
-                    onChanged: s.addAll ? null : n.setRoom,
-                  ),
-                  _TypeCheckTile(
-                    icon: Icons.sensors,
-                    label: l10n.radioSettingsAutoAddSensor,
-                    value: s.addSensor,
-                    onChanged: s.addAll ? null : n.setSensor,
-                  ),
-                ],
-              ),
-            ),
-
-            const Divider(height: 24),
-
-            // ── Overwrite Oldest ───────────────────────────────────────────
-            _DescCheckTile(
-              title: l10n.radioSettingsOverwriteOldest,
-              subtitle: l10n.radioSettingsOverwriteOldestDesc,
-              value: s.overwriteOldest,
-              onChanged: n.setOverwriteOldest,
-            ),
-
-            const SizedBox(height: 12),
-
-            // ── Auto Add Max Hops ──────────────────────────────────────────
+            const SizedBox(height: 6),
             Text(
-              l10n.radioSettingsAutoAddMaxHops,
+              l10n.radioSettingsExperimentalWarning,
+              style: theme.textTheme.bodySmall?.copyWith(
+                color: theme.colorScheme.onSurfaceVariant,
+              ),
+            ),
+            const Divider(height: 24),
+            Text(
+              l10n.radioSettingsPathHashMode,
               style: theme.textTheme.bodyMedium?.copyWith(
                 fontWeight: FontWeight.w600,
               ),
             ),
             const SizedBox(height: 4),
             Text(
-              l10n.radioSettingsAutoAddMaxHopsDesc,
+              l10n.radioSettingsPathHashModeDesc,
               style: theme.textTheme.bodySmall?.copyWith(
                 color: theme.colorScheme.onSurfaceVariant,
               ),
             ),
             const SizedBox(height: 8),
-            TextFormField(
-              controller: _maxHopsCtrl,
-              decoration: InputDecoration(
-                hintText: l10n.radioSettingsAutoAddMaxHopsHint,
-                border: const OutlineInputBorder(),
-                isDense: true,
+            if (!supported)
+              Padding(
+                padding: const EdgeInsets.only(top: 4),
+                child: Text(
+                  l10n.radioSettingsPathHashModeUnsupported,
+                  style: theme.textTheme.bodySmall?.copyWith(
+                    color: theme.colorScheme.error,
+                  ),
+                ),
+              )
+            else ...[
+              SegmentedButton<int>(
+                showSelectedIcon: false,
+                segments: [
+                  ButtonSegment(
+                    value: 0,
+                    label: Text(l10n.radioSettingsPathHashMode1),
+                  ),
+                  ButtonSegment(
+                    value: 1,
+                    label: Text(l10n.radioSettingsPathHashMode2),
+                  ),
+                  ButtonSegment(
+                    value: 2,
+                    label: Text(l10n.radioSettingsPathHashMode3),
+                  ),
+                ],
+                selected: {mode},
+                onSelectionChanged:
+                    _saving
+                        ? null
+                        : (sel) {
+                          if (sel.isNotEmpty && sel.first != mode) {
+                            _setPathHashMode(sel.first);
+                          }
+                        },
               ),
-              keyboardType: TextInputType.number,
-              onChanged: (v) {
-                final parsed = int.tryParse(v.trim());
-                if (v.trim().isEmpty) {
-                  n.setMaxHops(null);
-                } else if (parsed != null && parsed >= 0 && parsed <= 63) {
-                  n.setMaxHops(parsed);
-                }
-              },
-            ),
-
-            const Divider(height: 24),
-
-            // ── Pull To Refresh ────────────────────────────────────────────
-            _DescCheckTile(
-              title: l10n.radioSettingsPullToRefresh,
-              subtitle: l10n.radioSettingsPullToRefreshDesc,
-              value: s.pullToRefresh,
-              onChanged: n.setPullToRefresh,
-            ),
-
-            // ── Show Public Keys ───────────────────────────────────────────
-            _DescCheckTile(
-              title: l10n.radioSettingsShowPublicKeys,
-              subtitle: l10n.radioSettingsShowPublicKeysDesc,
-              value: s.showPublicKeys,
-              onChanged: n.setShowPublicKeys,
-            ),
+              const SizedBox(height: 6),
+              Text(
+                mode == 0
+                    ? l10n.radioSettingsPathHashModeCaptionDefault
+                    : l10n.radioSettingsPathHashModeCaptionExperimental,
+                style: theme.textTheme.bodySmall?.copyWith(
+                  color:
+                      mode == 0
+                          ? theme.colorScheme.onSurfaceVariant
+                          : theme.colorScheme.tertiary,
+                  fontStyle: FontStyle.italic,
+                ),
+              ),
+            ],
+            if (_saving) ...[
+              const SizedBox(height: 8),
+              const LinearProgressIndicator(),
+            ],
           ],
         ),
       ),
-    );
-  }
-}
-
-/// Checkbox tile for per-type auto-add (with icon).
-class _TypeCheckTile extends StatelessWidget {
-  const _TypeCheckTile({
-    required this.icon,
-    required this.label,
-    required this.value,
-    required this.onChanged,
-  });
-
-  final IconData icon;
-  final String label;
-  final bool value;
-  final ValueChanged<bool>? onChanged;
-
-  @override
-  Widget build(BuildContext context) {
-    return CheckboxListTile(
-      dense: true,
-      contentPadding: const EdgeInsets.only(left: 8),
-      secondary: Icon(icon, size: 20),
-      title: Text(label),
-      value: value,
-      onChanged: onChanged != null ? (v) => onChanged!(v ?? false) : null,
-      controlAffinity: ListTileControlAffinity.trailing,
-    );
-  }
-}
-
-/// Checkbox tile with a title and subtitle description line.
-class _DescCheckTile extends StatelessWidget {
-  const _DescCheckTile({
-    required this.title,
-    required this.subtitle,
-    required this.value,
-    required this.onChanged,
-  });
-
-  final String title;
-  final String subtitle;
-  final bool value;
-  final ValueChanged<bool> onChanged;
-
-  @override
-  Widget build(BuildContext context) {
-    return CheckboxListTile(
-      dense: true,
-      contentPadding: EdgeInsets.zero,
-      title: Text(title),
-      subtitle: Text(subtitle),
-      value: value,
-      onChanged: (v) => onChanged(v ?? false),
-      controlAffinity: ListTileControlAffinity.trailing,
     );
   }
 }
