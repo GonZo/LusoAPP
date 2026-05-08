@@ -108,11 +108,26 @@ void main() {
       expect((resp as TraceDataPush).data, Uint8List.fromList([0xAA, 0xBB]));
     });
 
-    test('decode TelemetryPush preserves data', () {
-      final payload = Uint8List.fromList([pushTelemetryResponse, 0x10, 0x20]);
+    test('decode TelemetryPush preserves pubkey prefix and data', () {
+      final payload = Uint8List.fromList([
+        pushTelemetryResponse,
+        0x00, // reserved
+        0x01,
+        0x02,
+        0x03,
+        0x04,
+        0x05,
+        0x06, // 6-byte pubkey prefix
+        0x10,
+        0x20, // telemetry payload
+      ]);
       final resp = CompanionDecoder.decode(payload);
       expect(resp, isA<TelemetryPush>());
-      expect((resp as TelemetryPush).data, Uint8List.fromList([0x10, 0x20]));
+      expect(
+        (resp as TelemetryPush).pubKeyPrefix,
+        Uint8List.fromList([0x01, 0x02, 0x03, 0x04, 0x05, 0x06]),
+      );
+      expect(resp.data, Uint8List.fromList([0x10, 0x20]));
     });
 
     test('decode LogRxDataPush preserves data', () {

@@ -114,6 +114,7 @@ class CompanionDecoder {
       case pushTraceData:
         return TraceDataPush(data);
       case pushTelemetryResponse:
+        // Official firmware layout: reserved(1) + pubkey_prefix(6) + payload.
         if (data.length < 7) {
           return TelemetryPush(Uint8List(0), Uint8List(0));
         }
