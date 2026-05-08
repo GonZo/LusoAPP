@@ -169,6 +169,30 @@ class _ChannelChatScreenState extends ConsumerState<ChannelChatScreen> {
     _scrollToBottom();
   }
 
+  void _sendPingMessage() {
+    final service = ref.read(radioServiceProvider);
+    if (service == null) return;
+
+    final typed = _textController.text.trim();
+    final payload = typed.isEmpty ? '!ping' : typed;
+    final ts = DateTime.now().millisecondsSinceEpoch ~/ 1000;
+
+    ref
+        .read(messagesProvider.notifier)
+        .addOutgoing(
+          ChatMessage(
+            text: payload,
+            timestamp: ts,
+            isOutgoing: true,
+            channelIndex: widget.channelIndex,
+          ),
+        );
+
+    service.sendChannelMessage(widget.channelIndex, payload, timestamp: ts);
+    _textController.clear();
+    _scrollToBottom();
+  }
+
   /// Scroll so the unread divider is at the top of the viewport.
   /// Delegates to [_tryScrollToDivider] which retries each frame until the
   /// divider widget is actually built by the lazy ListView.
@@ -291,6 +315,7 @@ class _ChannelChatScreenState extends ConsumerState<ChannelChatScreen> {
         .read(messagesProvider.notifier)
         .forChannel(widget.channelIndex);
     final theme = Theme.of(context);
+    final service = ref.watch(radioServiceProvider);
     final isMuted = ref.watch(
       mutedChannelsProvider.select((s) => s.contains(widget.channelIndex)),
     );
@@ -490,34 +515,83 @@ class _ChannelChatScreenState extends ConsumerState<ChannelChatScreen> {
 
         // Input bar
         if (channelName?.toLowerCase() == '#ping')
-          Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
-            child: SizedBox(
-              width: double.infinity,
-              child: FilledButton.icon(
-                onPressed: () {
-                  final service = ref.read(radioServiceProvider);
-                  if (service == null) return;
-                  final ts = DateTime.now().millisecondsSinceEpoch ~/ 1000;
-                  ref
-                      .read(messagesProvider.notifier)
-                      .addOutgoing(
-                        ChatMessage(
-                          text: '!ping',
-                          timestamp: ts,
-                          isOutgoing: true,
-                          channelIndex: widget.channelIndex,
+          SafeArea(
+            top: false,
+            child: Padding(
+              padding: const EdgeInsets.fromLTRB(12, 8, 12, 10),
+              child: Row(
+                children: [
+                  Expanded(
+                    child: TextField(
+                      controller: _textController,
+                      decoration: InputDecoration(
+                        hintText: '!ping ou mensagem...',
+                        prefixIcon: const Icon(Icons.wifi_tethering_outlined),
+                        border: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(18),
+                        ),
+                        contentPadding: const EdgeInsets.symmetric(
+                          horizontal: 12,
+                          vertical: 10,
+                        ),
+                      ),
+                      textInputAction: TextInputAction.send,
+                      onSubmitted: (_) => _sendPingMessage(),
+                      onTapOutside:
+                          (_) => FocusManager.instance.primaryFocus?.unfocus(),
+                      minLines: 1,
+                      maxLines: 3,
+                      maxLength: 140,
+                      buildCounter:
+                          (
+                            _, {
+                            required int currentLength,
+                            required bool isFocused,
+                            required int? maxLength,
+                          }) => null,
+                    ),
+                  ),
+                  const SizedBox(width: 8),
+                  ValueListenableBuilder<TextEditingValue>(
+                    valueListenable: _textController,
+                    builder: (context, value, _) {
+                      final hasText = value.text.trim().isNotEmpty;
+                      return Tooltip(
+                        message:
+                            hasText
+                                ? context.l10n.commonSendMessage
+                                : context.l10n.chatPingButton,
+                        child: SizedBox(
+                          width: 144,
+                          height: 52,
+                          child: FilledButton.icon(
+                            onPressed:
+                                service == null ? null : _sendPingMessage,
+                            style: FilledButton.styleFrom(
+                              padding: const EdgeInsets.symmetric(
+                                horizontal: 12,
+                              ),
+                              shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(16),
+                              ),
+                            ),
+                            icon: Icon(
+                              hasText ? Icons.send : Icons.wifi_tethering,
+                              size: 20,
+                            ),
+                            label: Text(
+                              hasText
+                                  ? context.l10n.commonSendMessage
+                                  : 'Enviar ping',
+                              maxLines: 1,
+                              overflow: TextOverflow.ellipsis,
+                            ),
+                          ),
                         ),
                       );
-                  service.sendChannelMessage(
-                    widget.channelIndex,
-                    '!ping',
-                    timestamp: ts,
-                  );
-                  _scrollToBottom();
-                },
-                icon: const Icon(Icons.wifi_tethering),
-                label: Text(context.l10n.chatPingButton),
+                    },
+                  ),
+                ],
               ),
             ),
           )
