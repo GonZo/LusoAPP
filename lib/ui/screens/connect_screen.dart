@@ -744,6 +744,7 @@ class _ConnectScreenState extends ConsumerState<ConnectScreen> {
     final stepLabel = ref.watch(connectionStepProvider);
     final stepIndex = ref.watch(connectionProgressProvider);
     final theme = Theme.of(context);
+    final isLightTheme = theme.brightness == Brightness.light;
     final showScanAreaExpanded = _scanning || _targets.isNotEmpty;
 
     // Total steps: 0=connecting transport, 1=waiting, 2=device info,
@@ -760,9 +761,32 @@ class _ConnectScreenState extends ConsumerState<ConnectScreen> {
               Stack(
                 clipBehavior: Clip.none,
                 children: [
-                  Image.asset(
-                    'assets/images/meshcore-pt-logo.webp',
-                    height: 120,
+                  Container(
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 20,
+                      vertical: 16,
+                    ),
+                    decoration: BoxDecoration(
+                      color:
+                          isLightTheme
+                              ? const Color(0xFF171717)
+                              : Colors.transparent,
+                      borderRadius: BorderRadius.circular(24),
+                      boxShadow:
+                          isLightTheme
+                              ? [
+                                BoxShadow(
+                                  color: Colors.black.withAlpha(18),
+                                  blurRadius: 24,
+                                  offset: const Offset(0, 10),
+                                ),
+                              ]
+                              : const [],
+                    ),
+                    child: Image.asset(
+                      'assets/images/meshcore-pt-logo.webp',
+                      height: 120,
+                    ),
                   ),
                   if (_showSummitEdition)
                     Positioned(

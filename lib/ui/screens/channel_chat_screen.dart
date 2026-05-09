@@ -446,74 +446,76 @@ class _ChannelChatScreenState extends ConsumerState<ChannelChatScreen> {
             onTap: () => FocusScope.of(context).unfocus(),
             behavior: HitTestBehavior.translucent,
             child: Stack(
-            children: [
-              channelMessages.isEmpty
-                  ? Center(
-                    child: Column(
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        Icon(
-                          Icons.forum_outlined,
-                          size: 64,
-                          color: theme.colorScheme.onSurface.withAlpha(60),
-                        ),
-                        const SizedBox(height: 16),
-                        Text(
-                          context.l10n.chatNoMessages,
-                          style: theme.textTheme.bodyLarge?.copyWith(
-                            color: theme.colorScheme.onSurface.withAlpha(120),
+              children: [
+                channelMessages.isEmpty
+                    ? Center(
+                      child: Column(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          Icon(
+                            Icons.forum_outlined,
+                            size: 64,
+                            color: theme.colorScheme.onSurface.withAlpha(60),
                           ),
-                        ),
-                      ],
-                    ),
-                  )
-                  : ListView.builder(
-                    controller: _scrollController,
-                    padding: const EdgeInsets.all(8),
-                    // Extra item slot for the unread divider when active.
-                    itemCount:
-                        channelMessages.length +
-                        (_firstUnreadIndex >= 0 ? 1 : 0),
-                    itemBuilder: (context, index) {
-                      // If the divider is active and we hit its slot, render it.
-                      if (_firstUnreadIndex >= 0 &&
-                          index == _firstUnreadIndex) {
-                        return _UnreadDivider(
-                          key: _unreadDividerKey,
-                          onDismiss:
-                              () => setState(() => _firstUnreadIndex = -1),
+                          const SizedBox(height: 16),
+                          Text(
+                            context.l10n.chatNoMessages,
+                            style: theme.textTheme.bodyLarge?.copyWith(
+                              color: theme.colorScheme.onSurface.withAlpha(120),
+                            ),
+                          ),
+                        ],
+                      ),
+                    )
+                    : ListView.builder(
+                      controller: _scrollController,
+                      padding: const EdgeInsets.all(8),
+                      // Extra item slot for the unread divider when active.
+                      itemCount:
+                          channelMessages.length +
+                          (_firstUnreadIndex >= 0 ? 1 : 0),
+                      itemBuilder: (context, index) {
+                        // If the divider is active and we hit its slot, render it.
+                        if (_firstUnreadIndex >= 0 &&
+                            index == _firstUnreadIndex) {
+                          return _UnreadDivider(
+                            key: _unreadDividerKey,
+                            onDismiss:
+                                () => setState(() => _firstUnreadIndex = -1),
+                          );
+                        }
+                        // Shift real message index down by 1 after the divider.
+                        final msgIndex =
+                            (_firstUnreadIndex >= 0 &&
+                                    index > _firstUnreadIndex)
+                                ? index - 1
+                                : index;
+                        final msg = channelMessages[msgIndex];
+                        return _MessageBubble(
+                          message: msg,
+                          selfName: selfName,
+                          selfMentionColor: selfMentionColor,
+                          otherMentionColor: otherMentionColor,
+                          onReply:
+                              msg.isOutgoing
+                                  ? null
+                                  : () => setState(() => _replyingTo = msg),
                         );
-                      }
-                      // Shift real message index down by 1 after the divider.
-                      final msgIndex =
-                          (_firstUnreadIndex >= 0 && index > _firstUnreadIndex)
-                              ? index - 1
-                              : index;
-                      final msg = channelMessages[msgIndex];
-                      return _MessageBubble(
-                        message: msg,
-                        selfName: selfName,
-                        selfMentionColor: selfMentionColor,
-                        otherMentionColor: otherMentionColor,
-                        onReply:
-                            msg.isOutgoing
-                                ? null
-                                : () => setState(() => _replyingTo = msg),
-                      );
-                    },
+                      },
+                    ),
+                if (!_atBottom)
+                  Positioned(
+                    bottom: 8,
+                    right: 12,
+                    child: FloatingActionButton.small(
+                      heroTag: 'scroll_bottom_ch${widget.channelIndex}',
+                      onPressed:
+                          () => _scrollToBottom(animate: true, attempts: 5),
+                      child: const Icon(Icons.keyboard_double_arrow_down),
+                    ),
                   ),
-              if (!_atBottom)
-                Positioned(
-                  bottom: 8,
-                  right: 12,
-                  child: FloatingActionButton.small(
-                    heroTag: 'scroll_bottom_ch${widget.channelIndex}',
-                    onPressed:
-                        () => _scrollToBottom(animate: true, attempts: 5),
-                    child: const Icon(Icons.keyboard_double_arrow_down),
-                  ),
-                ),
-            ],
+              ],
+            ),
           ),
         ),
 
@@ -533,12 +535,7 @@ class _ChannelChatScreenState extends ConsumerState<ChannelChatScreen> {
                         prefixIcon: const Icon(Icons.wifi_tethering_outlined),
                         border: OutlineInputBorder(
                           borderRadius: BorderRadius.circular(18),
-                        ],
-                      ),
-                      ),
-                    ),
-
-                    // Input bar
+                        ),
                       ),
                       textInputAction: TextInputAction.send,
                       onSubmitted: (_) => _sendPingMessage(),
