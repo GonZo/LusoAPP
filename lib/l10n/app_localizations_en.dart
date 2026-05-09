@@ -1439,6 +1439,9 @@ class AppLocalizationsEn extends AppLocalizations {
   String get connectLastFailTitle => 'Failed to connect to last device';
 
   @override
+  String get connectCancelledMessage => 'Connection to radio cancelled';
+
+  @override
   String get discoverTitle => 'Discover';
 
   @override

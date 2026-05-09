@@ -496,6 +496,7 @@
   "connectOpenSettings": "Settings",
   "connectFailTitle": "Failed to connect to device",
   "connectLastFailTitle": "Failed to connect to last device",
+  "connectCancelledMessage": "Connection to radio cancelled",
   "discoverTitle": "Discover",
   "discoverSubtitle": "Recent Adverts",
   "discoverSearchHint": "Search discovered contacts...",

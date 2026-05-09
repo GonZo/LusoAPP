@@ -2824,6 +2824,12 @@ abstract class AppLocalizations {
   /// **'Falha ao ligar ao último dispositivo'**
   String get connectLastFailTitle;
 
+  /// No description provided for @connectCancelledMessage.
+  ///
+  /// In pt, this message translates to:
+  /// **'Ligação ao rádio cancelada'**
+  String get connectCancelledMessage;
+
   /// No description provided for @discoverTitle.
   ///
   /// In pt, this message translates to:

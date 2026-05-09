@@ -1448,6 +1448,9 @@ class AppLocalizationsPt extends AppLocalizations {
   String get connectLastFailTitle => 'Falha ao ligar ao último dispositivo';
 
   @override
+  String get connectCancelledMessage => 'Ligação ao rádio cancelada';
+
+  @override
   String get discoverTitle => 'Descobrir';
 
   @override

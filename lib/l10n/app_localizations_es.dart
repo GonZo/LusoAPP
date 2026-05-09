@@ -1454,6 +1454,9 @@ class AppLocalizationsEs extends AppLocalizations {
       'Error al conectar con el último dispositivo';
 
   @override
+  String get connectCancelledMessage => 'Conexión al radio cancelada';
+
+  @override
   String get discoverTitle => 'Descubrir';
 
   @override

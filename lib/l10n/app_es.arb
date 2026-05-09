@@ -496,6 +496,7 @@
   "connectOpenSettings": "Ajustes",
   "connectFailTitle": "Error al conectar con el dispositivo",
   "connectLastFailTitle": "Error al conectar con el último dispositivo",
+  "connectCancelledMessage": "Conexión al radio cancelada",
   "discoverTitle": "Descubrir",
   "discoverSubtitle": "Anuncios Recientes",
   "discoverSearchHint": "Buscar contactos descubiertos...",

@@ -104,6 +104,7 @@ class _ConnectScreenState extends ConsumerState<ConnectScreen> {
   _ConnectTarget? _connectingTarget;
   int _cachedContactCount = 0;
   int _cachedChannelCount = 0;
+  bool _cancelledByUser = false;
 
   @override
   void initState() {
@@ -421,6 +422,7 @@ class _ConnectScreenState extends ConsumerState<ConnectScreen> {
 
   Future<void> _connectTo(_ConnectTarget target) async {
     if (target.type == _ConnectType.ble && !_checkBluetoothOn()) return;
+    _cancelledByUser = false;
 
     setState(() {
       _connectingTarget = target;
@@ -466,12 +468,27 @@ class _ConnectScreenState extends ConsumerState<ConnectScreen> {
       context.go('/channels');
     } else if (mounted) {
       setState(() => _connectingTarget = null);
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text(context.l10n.connectFailTitle),
-          backgroundColor: Theme.of(context).colorScheme.error,
-        ),
-      );
+      if (_cancelledByUser) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Row(
+              children: [
+                const Icon(Icons.cancel_outlined, color: Colors.white),
+                const SizedBox(width: 12),
+                Expanded(child: Text(context.l10n.connectCancelledMessage)),
+              ],
+            ),
+            duration: const Duration(seconds: 3),
+          ),
+        );
+      } else {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(context.l10n.connectFailTitle),
+            backgroundColor: Theme.of(context).colorScheme.error,
+          ),
+        );
+      }
     }
   }
 
@@ -528,6 +545,7 @@ class _ConnectScreenState extends ConsumerState<ConnectScreen> {
       _cachedChannelCount = ref.read(radioChannelsSnapshotProvider).length;
     });
     if (last.type == 'ble' && !_checkBluetoothOn()) return;
+    _cancelledByUser = false;
 
     final connection = ref.read(connectionProvider.notifier);
     bool ok;
@@ -558,12 +576,27 @@ class _ConnectScreenState extends ConsumerState<ConnectScreen> {
       context.go('/channels');
     } else if (mounted) {
       setState(() => _connectingTarget = null);
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text(context.l10n.connectLastFailTitle),
-          backgroundColor: Theme.of(context).colorScheme.error,
-        ),
-      );
+      if (_cancelledByUser) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Row(
+              children: [
+                const Icon(Icons.cancel_outlined, color: Colors.white),
+                const SizedBox(width: 12),
+                Expanded(child: Text(context.l10n.connectCancelledMessage)),
+              ],
+            ),
+            duration: const Duration(seconds: 3),
+          ),
+        );
+      } else {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(context.l10n.connectLastFailTitle),
+            backgroundColor: Theme.of(context).colorScheme.error,
+          ),
+        );
+      }
     }
   }
 
@@ -786,6 +819,11 @@ class _ConnectScreenState extends ConsumerState<ConnectScreen> {
                   channelCount: ref.watch(radioChannelsSnapshotProvider).length,
                   cachedContactCount: _cachedContactCount,
                   cachedChannelCount: _cachedChannelCount,
+                  onCancel: () async {
+                    _cancelledByUser = true;
+                    await ref.read(connectionProvider.notifier).disconnect();
+                    if (mounted) setState(() => _connectingTarget = null);
+                  },
                 )
               else ...[
                 Builder(

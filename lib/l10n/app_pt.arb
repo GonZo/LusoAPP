@@ -503,6 +503,7 @@
   "connectOpenSettings": "Definições",
   "connectFailTitle": "Falha ao ligar ao dispositivo",
   "connectLastFailTitle": "Falha ao ligar ao último dispositivo",
+  "connectCancelledMessage": "Ligação ao rádio cancelada",
   "discoverTitle": "Descobrir",
   "discoverSubtitle": "Anúncios Recentes",
   "discoverSearchHint": "Procurar contactos descobertos...",
