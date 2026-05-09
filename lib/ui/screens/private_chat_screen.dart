@@ -490,7 +490,18 @@ class _PrivateChatScreenState extends ConsumerState<PrivateChatScreen> {
     }
 
     // Send trace with correct hop-hash path bytes.
-    await service.tracePath(Random().nextInt(0x7FFFFFFF), path: pathBytes);
+    final traceTag = Random().nextInt(0x7FFFFFFF);
+    final traceCtx = Map<int, TraceRequestContext>.from(
+      ref.read(traceRequestContextProvider),
+    );
+    traceCtx[traceTag] = TraceRequestContext(
+      contactName: contact.displayName,
+      latitude: contact.latitude,
+      longitude: contact.longitude,
+    );
+    ref.read(traceRequestContextProvider.notifier).state = traceCtx;
+
+    await service.tracePath(traceTag, path: pathBytes);
 
     // Arm timeout for the trace-data response (PUSH_CODE_TRACE_DATA 0x89).
     _traceTimeout = Timer(const Duration(seconds: 15), () {

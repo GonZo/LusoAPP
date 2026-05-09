@@ -901,6 +901,24 @@ final traceHistoryProvider =
       (_) => _TraceHistoryNotifier(),
     );
 
+/// Context for a pending trace request, keyed by trace tag.
+/// Lets UI enrich trace results with the intended traced contact even when
+/// that contact is not represented in hop-hash data (or has no GPS).
+class TraceRequestContext {
+  const TraceRequestContext({
+    required this.contactName,
+    this.latitude,
+    this.longitude,
+  });
+
+  final String contactName;
+  final double? latitude;
+  final double? longitude;
+}
+
+final traceRequestContextProvider =
+    StateProvider<Map<int, TraceRequestContext>>((_) => {});
+
 /// Cache of outPath bytes per contact, keyed by 6-byte pubKeyPrefix hex.
 /// Populated whenever a PathDiscoveryPush (0x8D) is received.
 /// Used by the trace flow to supply correct hop-hash path bytes.

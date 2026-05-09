@@ -361,6 +361,7 @@ class ConnectionNotifier extends StateNotifier<TransportState> {
     _ref.read(radioChannelsSnapshotProvider.notifier).state = {};
     _ref.read(contactsSyncedProvider.notifier).state = false;
     _ref.read(traceHistoryProvider.notifier).clear();
+    _ref.read(traceRequestContextProvider.notifier).state = {};
     // Clear the current radio ID so channel storage is not accidentally
     // written to the disconnected radio's scope.
     _ref.read(currentRadioIdProvider.notifier).state = null;
@@ -901,7 +902,26 @@ class ConnectionNotifier extends StateNotifier<TransportState> {
           }
         case TraceDataPush(:final data):
           final contacts = _ref.read(contactsProvider);
-          final result = parseTraceDataPush(data, contacts);
+          final parsed = parseTraceDataPush(data, contacts);
+          TraceResult? result = parsed;
+          if (parsed != null) {
+            final pending = Map<int, TraceRequestContext>.from(
+              _ref.read(traceRequestContextProvider),
+            );
+            final ctx = pending.remove(parsed.tag);
+            if (ctx != null) {
+              _ref.read(traceRequestContextProvider.notifier).state = pending;
+              result = TraceResult(
+                tag: parsed.tag,
+                hops: parsed.hops,
+                finalSnrDb: parsed.finalSnrDb,
+                timestamp: parsed.timestamp,
+                targetName: ctx.contactName,
+                targetLatitude: ctx.latitude,
+                targetLongitude: ctx.longitude,
+              );
+            }
+          }
           if (result != null) {
             _ref.read(traceResultProvider.notifier).state = result;
             _ref.read(traceHistoryProvider.notifier).add(result);

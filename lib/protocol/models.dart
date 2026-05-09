@@ -630,12 +630,20 @@ class TraceResult {
     required this.hops,
     required this.finalSnrDb,
     required this.timestamp,
+    this.targetName,
+    this.targetLatitude,
+    this.targetLongitude,
   });
 
   final int tag;
   final List<TraceHop> hops;
   final double finalSnrDb; // SNR of the last link into our radio
   final DateTime timestamp;
+  final String? targetName; // traced client/contact display name (if known)
+  final double? targetLatitude;
+  final double? targetLongitude;
+
+  bool get targetHasGps => targetLatitude != null && targetLongitude != null;
 
   int get hopCount => hops.length;
 }
