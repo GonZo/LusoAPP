@@ -1,6 +1,8 @@
 import 'dart:async';
 import 'dart:math';
 
+import 'package:flutter/foundation.dart'
+    show TargetPlatform, defaultTargetPlatform, kIsWeb;
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -202,6 +204,8 @@ class _PrivateChatScreenState extends ConsumerState<PrivateChatScreen> {
       contactsProvider.select((contacts) => _findContact(contacts)),
     );
     final theme = Theme.of(context);
+    final dismissKeyboardOnWallTap =
+        !kIsWeb && defaultTargetPlatform == TargetPlatform.iOS;
 
     // O(1) partition lookup — no filter scan over all messages (#7 perf fix).
     final contactMessages = ref
@@ -321,69 +325,80 @@ class _PrivateChatScreenState extends ConsumerState<PrivateChatScreen> {
           ),
         ),
 
-        // Messages
+        // Messages — on iOS, tapping the background dismisses the keyboard
+        // without navigating away from the private chat.
         Expanded(
-          child: Stack(
-            children: [
-              contactMessages.isEmpty
-                  ? Center(
-                    child: Column(
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        Icon(
-                          Icons.chat_bubble_outline,
-                          size: 64,
-                          color: theme.colorScheme.onSurface.withAlpha(60),
-                        ),
-                        const SizedBox(height: 16),
-                        Text(
-                          context.l10n.privateNoMessages,
-                          style: theme.textTheme.bodyLarge?.copyWith(
-                            color: theme.colorScheme.onSurface.withAlpha(120),
+          child: GestureDetector(
+            onTap:
+                dismissKeyboardOnWallTap
+                    ? () => FocusScope.of(context).unfocus()
+                    : null,
+            behavior:
+                dismissKeyboardOnWallTap
+                    ? HitTestBehavior.translucent
+                    : HitTestBehavior.deferToChild,
+            child: Stack(
+              children: [
+                contactMessages.isEmpty
+                    ? Center(
+                      child: Column(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          Icon(
+                            Icons.chat_bubble_outline,
+                            size: 64,
+                            color: theme.colorScheme.onSurface.withAlpha(60),
                           ),
-                        ),
-                        const SizedBox(height: 4),
-                        Text(
-                          context.l10n.privateSendFirstMessage,
-                          style: theme.textTheme.bodySmall,
-                        ),
-                      ],
+                          const SizedBox(height: 16),
+                          Text(
+                            context.l10n.privateNoMessages,
+                            style: theme.textTheme.bodyLarge?.copyWith(
+                              color: theme.colorScheme.onSurface.withAlpha(120),
+                            ),
+                          ),
+                          const SizedBox(height: 4),
+                          Text(
+                            context.l10n.privateSendFirstMessage,
+                            style: theme.textTheme.bodySmall,
+                          ),
+                        ],
+                      ),
+                    )
+                    : ListView.builder(
+                      controller: _scrollController,
+                      padding: const EdgeInsets.all(8),
+                      itemCount: contactMessages.length,
+                      itemBuilder: (context, index) {
+                        final msg = contactMessages[index];
+                        return _PrivateMessageBubble(
+                          message: msg,
+                          selfName: selfName,
+                          selfMentionColor: selfMentionColor,
+                          otherMentionColor: otherMentionColor,
+                          contactDisplayName:
+                              msg.isOutgoing ? null : contact?.displayName,
+                          contactPathLen: contact?.pathLen,
+                          onReply:
+                              msg.isOutgoing
+                                  ? null
+                                  : () => setState(() => _replyingTo = msg),
+                          onRetry:
+                              msg.isOutgoing ? () => _retryMessage(msg) : null,
+                        );
+                      },
                     ),
-                  )
-                  : ListView.builder(
-                    controller: _scrollController,
-                    padding: const EdgeInsets.all(8),
-                    itemCount: contactMessages.length,
-                    itemBuilder: (context, index) {
-                      final msg = contactMessages[index];
-                      return _PrivateMessageBubble(
-                        message: msg,
-                        selfName: selfName,
-                        selfMentionColor: selfMentionColor,
-                        otherMentionColor: otherMentionColor,
-                        contactDisplayName:
-                            msg.isOutgoing ? null : contact?.displayName,
-                        contactPathLen: contact?.pathLen,
-                        onReply:
-                            msg.isOutgoing
-                                ? null
-                                : () => setState(() => _replyingTo = msg),
-                        onRetry:
-                            msg.isOutgoing ? () => _retryMessage(msg) : null,
-                      );
-                    },
+                if (!_atBottom)
+                  Positioned(
+                    bottom: 8,
+                    right: 12,
+                    child: FloatingActionButton.small(
+                      heroTag: 'scroll_bottom_priv${widget.contactKeyHex}',
+                      onPressed: _scrollToBottom,
+                      child: const Icon(Icons.keyboard_double_arrow_down),
+                    ),
                   ),
-              if (!_atBottom)
-                Positioned(
-                  bottom: 8,
-                  right: 12,
-                  child: FloatingActionButton.small(
-                    heroTag: 'scroll_bottom_priv${widget.contactKeyHex}',
-                    onPressed: _scrollToBottom,
-                    child: const Icon(Icons.keyboard_double_arrow_down),
-                  ),
-                ),
-            ],
+              ],
+            ),
           ),
         ),
 

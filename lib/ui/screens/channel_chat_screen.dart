@@ -439,9 +439,13 @@ class _ChannelChatScreenState extends ConsumerState<ChannelChatScreen> {
           ),
         ),
 
-        // Messages
+        // Messages — tapping the background dismisses the keyboard without
+        // navigating away (iOS back-button behaviour workaround).
         Expanded(
-          child: Stack(
+          child: GestureDetector(
+            onTap: () => FocusScope.of(context).unfocus(),
+            behavior: HitTestBehavior.translucent,
+            child: Stack(
             children: [
               channelMessages.isEmpty
                   ? Center(
@@ -529,11 +533,12 @@ class _ChannelChatScreenState extends ConsumerState<ChannelChatScreen> {
                         prefixIcon: const Icon(Icons.wifi_tethering_outlined),
                         border: OutlineInputBorder(
                           borderRadius: BorderRadius.circular(18),
-                        ),
-                        contentPadding: const EdgeInsets.symmetric(
-                          horizontal: 12,
-                          vertical: 10,
-                        ),
+                        ],
+                      ),
+                      ),
+                    ),
+
+                    // Input bar
                       ),
                       textInputAction: TextInputAction.send,
                       onSubmitted: (_) => _sendPingMessage(),
@@ -622,8 +627,8 @@ class _ChannelChatScreenState extends ConsumerState<ChannelChatScreen> {
 /// Small pill badge shown below outgoing channel message bubbles indicating
 /// how many repeaters have echoed the message back to the radio.
 ///
-/// - count == 0, within 10 s of first render: amber pill "A propagar..."
-/// - count == 0, 10 s elapsed with no repeater heard: blue pill "Enviada"
+/// - count == 0, within 20 s of first render: amber pill "A propagar..."
+/// - count == 0, 20 s elapsed with no repeater heard: grey pill "Transmitida"
 /// - count  > 0: green pill with a broadcast icon + count
 class _HeardBadge extends StatefulWidget {
   const _HeardBadge({
@@ -651,16 +656,17 @@ class _HeardBadgeState extends State<_HeardBadge> {
   @override
   void initState() {
     super.initState();
-    // Start the timer — if no repeater is heard within 10 s we show "Enviada".
+    // Start the timer — if no repeater is heard within 20 s we show
+    // "Transmitida" (transmitted, no echo confirmed).
     // Use the message timestamp to calculate how much time has already elapsed
     // so that re-opening the channel doesn't replay the animation for old
     // messages that already timed out.
     if (widget.count == 0) {
-      const kTimeout = Duration(seconds: 10);
+      const kTimeout = Duration(seconds: 20);
       final now = DateTime.now().millisecondsSinceEpoch ~/ 1000;
       final elapsedMs = (now - widget.timestamp) * 1000;
       if (elapsedMs >= kTimeout.inMilliseconds) {
-        // Already past the threshold — show "Enviada" immediately.
+        // Already past the threshold — show "Transmitida" immediately.
         _timedOut = true;
       } else {
         final remaining = kTimeout - Duration(milliseconds: elapsedMs);
@@ -690,47 +696,59 @@ class _HeardBadgeState extends State<_HeardBadge> {
   @override
   Widget build(BuildContext context) {
     final heard = widget.count > 0;
-    final showSent = !heard && _timedOut;
+    final showTransmitted = !heard && _timedOut;
     final bgColor =
         heard
             ? Colors.green.shade700.withAlpha(200)
-            : showSent
-            ? Colors.blue.shade700.withAlpha(200)
+            : showTransmitted
+            ? Colors.grey.shade600.withAlpha(180)
             : Colors.amber.shade800.withAlpha(180);
     const fgColor = Colors.white;
     final icon =
         heard
             ? Icons.cell_tower
-            : showSent
-            ? Icons.check_circle_outline
+            : showTransmitted
+            ? Icons.send
             : Icons.hourglass_empty;
     final label =
         heard
             ? '${widget.count} Repetidor${widget.count > 1 ? 'es' : ''}'
-            : showSent
+            : showTransmitted
             ? context.l10n.commonSent
             : context.l10n.commonPropagating;
+
+    final tooltipMsg =
+        heard
+            ? context.l10n.chatBadgeHeardTooltip(widget.count)
+            : showTransmitted
+            ? context.l10n.chatBadgeTransmittedTooltip
+            : context.l10n.chatBadgePropagatingTooltip;
 
     return Row(
       mainAxisSize: MainAxisSize.min,
       children: [
-        Container(
-          padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 3),
-          decoration: BoxDecoration(
-            color: bgColor,
-            borderRadius: BorderRadius.circular(10),
-          ),
-          child: Row(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              Icon(icon, size: 11, color: fgColor),
-              const SizedBox(width: 4),
-              Text(
-                label,
-                style: (widget.theme.textTheme.labelSmall ?? const TextStyle())
-                    .copyWith(color: fgColor, fontSize: 10),
-              ),
-            ],
+        Tooltip(
+          message: tooltipMsg,
+          preferBelow: false,
+          child: Container(
+            padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 3),
+            decoration: BoxDecoration(
+              color: bgColor,
+              borderRadius: BorderRadius.circular(10),
+            ),
+            child: Row(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Icon(icon, size: 11, color: fgColor),
+                const SizedBox(width: 4),
+                Text(
+                  label,
+                  style: (widget.theme.textTheme.labelSmall ??
+                          const TextStyle())
+                      .copyWith(color: fgColor, fontSize: 10),
+                ),
+              ],
+            ),
           ),
         ),
       ],
