@@ -783,6 +783,12 @@ class AppLocalizationsPt extends AppLocalizations {
   String get contactsAdvertFlood => 'Anúncio · Flood';
 
   @override
+  String get contactsAdvertSentZeroHop => 'Anúncio Zero Hop enviado';
+
+  @override
+  String get contactsAdvertSentFlood => 'Anúncio Flood enviado';
+
+  @override
   String get contactsSort => 'Ordenar';
 
   @override

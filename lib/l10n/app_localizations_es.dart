@@ -785,6 +785,12 @@ class AppLocalizationsEs extends AppLocalizations {
   String get contactsAdvertFlood => 'Anuncio · Flood';
 
   @override
+  String get contactsAdvertSentZeroHop => 'Anuncio Zero Hop enviado';
+
+  @override
+  String get contactsAdvertSentFlood => 'Anuncio Flood enviado';
+
+  @override
   String get contactsSort => 'Ordenar';
 
   @override

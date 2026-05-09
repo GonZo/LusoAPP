@@ -284,6 +284,8 @@
   "contactsSendAdvert": "Enviar Anúncio",
   "contactsAdvertZeroHop": "Anúncio · Zero Hop",
   "contactsAdvertFlood": "Anúncio · Flood",
+  "contactsAdvertSentZeroHop": "Anúncio Zero Hop enviado",
+  "contactsAdvertSentFlood": "Anúncio Flood enviado",
   "contactsSort": "Ordenar",
   "contactsSortNameAZ": "Nome (A-Z)",
   "contactsSortLastHeard": "Ouvido recentemente",

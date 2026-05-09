@@ -354,11 +354,50 @@ class _ContactsScreenState extends ConsumerState<ContactsScreen> {
                     tooltip: context.l10n.contactsSendAdvert,
                     onSelected: (type) {
                       final svc = ref.read(radioServiceProvider);
+                      if (svc == null) return;
                       switch (type) {
                         case _AdvertType.zeroHop:
-                          svc?.sendAdvert(flood: false);
+                          svc.sendAdvert(flood: false);
+                          ScaffoldMessenger.of(context).showSnackBar(
+                            SnackBar(
+                              content: Row(
+                                children: [
+                                  const Icon(
+                                    Icons.wifi_tethering,
+                                    color: Colors.white,
+                                  ),
+                                  const SizedBox(width: 12),
+                                  Expanded(
+                                    child: Text(
+                                      context.l10n.contactsAdvertSentZeroHop,
+                                    ),
+                                  ),
+                                ],
+                              ),
+                              duration: const Duration(seconds: 2),
+                            ),
+                          );
                         case _AdvertType.flood:
-                          svc?.sendAdvert(flood: true);
+                          svc.sendAdvert(flood: true);
+                          ScaffoldMessenger.of(context).showSnackBar(
+                            SnackBar(
+                              content: Row(
+                                children: [
+                                  const Icon(
+                                    Icons.broadcast_on_home,
+                                    color: Colors.white,
+                                  ),
+                                  const SizedBox(width: 12),
+                                  Expanded(
+                                    child: Text(
+                                      context.l10n.contactsAdvertSentFlood,
+                                    ),
+                                  ),
+                                ],
+                              ),
+                              duration: const Duration(seconds: 2),
+                            ),
+                          );
                       }
                     },
                     itemBuilder:

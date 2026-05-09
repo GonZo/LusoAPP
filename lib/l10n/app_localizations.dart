@@ -1552,6 +1552,18 @@ abstract class AppLocalizations {
   /// **'Anúncio · Flood'**
   String get contactsAdvertFlood;
 
+  /// No description provided for @contactsAdvertSentZeroHop.
+  ///
+  /// In pt, this message translates to:
+  /// **'Anúncio Zero Hop enviado'**
+  String get contactsAdvertSentZeroHop;
+
+  /// No description provided for @contactsAdvertSentFlood.
+  ///
+  /// In pt, this message translates to:
+  /// **'Anúncio Flood enviado'**
+  String get contactsAdvertSentFlood;
+
   /// No description provided for @contactsSort.
   ///
   /// In pt, this message translates to:

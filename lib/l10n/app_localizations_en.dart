@@ -777,6 +777,12 @@ class AppLocalizationsEn extends AppLocalizations {
   String get contactsAdvertFlood => 'Advert · Flood';
 
   @override
+  String get contactsAdvertSentZeroHop => 'Zero Hop advert sent';
+
+  @override
+  String get contactsAdvertSentFlood => 'Flood advert sent';
+
+  @override
   String get contactsSort => 'Sort';
 
   @override
