@@ -377,11 +377,7 @@ class ConnectionNotifier extends StateNotifier<TransportState> {
     final contacts = _ref.read(contactsProvider);
     final channels = _ref.read(channelsProvider);
 
-    // Same LiPo curve used by the home screen: 4200 mV = 100%, 3200 mV = 0%
-    final batteryPct =
-        batteryMv == 0
-            ? 0
-            : (((batteryMv.clamp(3200, 4200) - 3200) / 1000) * 100).round();
+    final batteryPct = batteryPercentFromMv(batteryMv);
 
     WidgetService.update(
       radioName: selfInfo?.name ?? '—',

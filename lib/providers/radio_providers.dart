@@ -15,6 +15,7 @@ import '../services/radio_service.dart';
 import '../services/storage_service.dart';
 import '../services/widget_service.dart';
 import '../transport/transport.dart';
+import '../utils/battery_utils.dart';
 
 part 'parts/connection_notifier.dart';
 part 'parts/messages_notifier.dart';

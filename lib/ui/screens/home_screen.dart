@@ -9,6 +9,7 @@ import 'package:go_router/go_router.dart';
 import '../../l10n/l10n.dart';
 import '../../providers/radio_providers.dart';
 import '../../transport/radio_transport.dart';
+import '../../utils/battery_utils.dart';
 import '../theme.dart';
 
 /// Main shell screen with bottom navigation.
@@ -77,7 +78,6 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
         return true;
       },
       child: Scaffold(
-        backgroundColor: AppTheme.background,
         appBar: AppBar(
           leading:
               showIosChatBack
@@ -291,8 +291,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
   }
 
   int _batteryPercent(int mv) {
-    // LiPo curve: matches MeshCore firmware defaults (3000–4200 mV)
-    return (((mv.clamp(3000, 4200) - 3000) / 1200) * 100).round();
+    return batteryPercentFromMv(mv);
   }
 
   IconData _batteryIcon(int mv) {
