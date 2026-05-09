@@ -131,9 +131,19 @@
   "commonSendMessage": "Enviar mensaje",
   "commonNoData": "Sin datos",
   "commonMessageCopied": "Mensaje copiado",
-  "commonSent": "Enviado",
+  "commonSent": "Transmitido",
   "commonSentByMe": "Yo",
   "commonPropagating": "Propagando...",
+  "chatBadgePropagatingTooltip": "Esperando eco de repetidor...",
+  "chatBadgeTransmittedTooltip": "Transmitido — sin eco de repetidor recibido",
+  "chatBadgeHeardTooltip": "Escuchado por {count} repetidor(es)",
+  "@chatBadgeHeardTooltip": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
   "commonConnecting": "Conectando...",
   "commonSearching": "Buscando...",
   "commonAuthenticated": "Autenticado",

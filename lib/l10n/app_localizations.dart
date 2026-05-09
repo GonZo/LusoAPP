@@ -667,7 +667,7 @@ abstract class AppLocalizations {
   /// No description provided for @commonSent.
   ///
   /// In pt, this message translates to:
-  /// **'Enviada'**
+  /// **'Transmitida'**
   String get commonSent;
 
   /// No description provided for @commonSentByMe.
@@ -681,6 +681,24 @@ abstract class AppLocalizations {
   /// In pt, this message translates to:
   /// **'A propagar...'**
   String get commonPropagating;
+
+  /// No description provided for @chatBadgePropagatingTooltip.
+  ///
+  /// In pt, this message translates to:
+  /// **'A aguardar eco de repetidor...'**
+  String get chatBadgePropagatingTooltip;
+
+  /// No description provided for @chatBadgeTransmittedTooltip.
+  ///
+  /// In pt, this message translates to:
+  /// **'Transmitida — sem eco de repetidor recebido'**
+  String get chatBadgeTransmittedTooltip;
+
+  /// No description provided for @chatBadgeHeardTooltip.
+  ///
+  /// In pt, this message translates to:
+  /// **'Ouvida por {count} repetidor(es)'**
+  String chatBadgeHeardTooltip(int count);
 
   /// No description provided for @commonConnecting.
   ///

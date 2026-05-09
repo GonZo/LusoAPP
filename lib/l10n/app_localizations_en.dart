@@ -314,13 +314,25 @@ class AppLocalizationsEn extends AppLocalizations {
   String get commonMessageCopied => 'Message copied';
 
   @override
-  String get commonSent => 'Sent';
+  String get commonSent => 'Transmitted';
 
   @override
   String get commonSentByMe => 'Me';
 
   @override
   String get commonPropagating => 'Propagating...';
+
+  @override
+  String get chatBadgePropagatingTooltip => 'Waiting for a repeater echo...';
+
+  @override
+  String get chatBadgeTransmittedTooltip =>
+      'Transmitted — no repeater echo received';
+
+  @override
+  String chatBadgeHeardTooltip(int count) {
+    return 'Heard by $count repeater(s)';
+  }
 
   @override
   String get commonConnecting => 'Connecting...';

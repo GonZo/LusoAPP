@@ -318,13 +318,25 @@ class AppLocalizationsEs extends AppLocalizations {
   String get commonMessageCopied => 'Mensaje copiado';
 
   @override
-  String get commonSent => 'Enviado';
+  String get commonSent => 'Transmitido';
 
   @override
   String get commonSentByMe => 'Yo';
 
   @override
   String get commonPropagating => 'Propagando...';
+
+  @override
+  String get chatBadgePropagatingTooltip => 'Esperando eco de repetidor...';
+
+  @override
+  String get chatBadgeTransmittedTooltip =>
+      'Transmitido — sin eco de repetidor recibido';
+
+  @override
+  String chatBadgeHeardTooltip(int count) {
+    return 'Escuchado por $count repetidor(es)';
+  }
 
   @override
   String get commonConnecting => 'Conectando...';
