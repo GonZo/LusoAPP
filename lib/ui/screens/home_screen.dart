@@ -1,5 +1,6 @@
 import 'dart:async';
 
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -58,6 +59,13 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
 
     final currentPath = widget.currentPath;
     final tabIndex = widget.navigationShell.currentIndex;
+    final isIos = defaultTargetPlatform == TargetPlatform.iOS;
+    final isChannelsChatPage = currentPath.startsWith('/channels/');
+    final isContactsChatPage =
+        currentPath.startsWith('/chat/') ||
+        currentPath.startsWith('/room/') ||
+        currentPath.startsWith('/repeater/');
+    final showIosChatBack = isIos && (isChannelsChatPage || isContactsChatPage);
 
     // When inside an apps sub-page, show a back arrow and the app's name.
     final appSubTitle = _appSubTitle(context, currentPath);
@@ -72,7 +80,19 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
         backgroundColor: AppTheme.background,
         appBar: AppBar(
           leading:
-              isAppsSubPage
+              showIosChatBack
+                  ? IconButton(
+                    icon: const Icon(Icons.arrow_back_ios_new_rounded),
+                    tooltip: context.l10n.commonBack,
+                    onPressed: () {
+                      if (isChannelsChatPage) {
+                        context.go('/channels');
+                      } else {
+                        context.go('/contacts');
+                      }
+                    },
+                  )
+                  : isAppsSubPage
                   ? IconButton(
                     icon: const Icon(Icons.arrow_back),
                     tooltip: context.l10n.commonBack,
