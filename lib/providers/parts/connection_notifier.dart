@@ -67,13 +67,15 @@ class ConnectionNotifier extends StateNotifier<TransportState> {
 
         await _fetchInitialData(service);
         state = TransportState.connected;
-        // Prefer the radio's configured node name; fall back to the BLE
-        // advertisement name so the reconnect button always shows something.
+        // Start foreground service to prevent Doze mode from killing the connection
         final radioNodeName = _ref.read(selfInfoProvider)?.name;
         final displayName =
             (radioNodeName != null && radioNodeName.isNotEmpty)
                 ? radioNodeName
                 : deviceName;
+        await NotificationService.instance.startRadioForeground(displayName);
+        // Prefer the radio's configured node name; fall back to the BLE
+        // advertisement name so the reconnect button always shows something.
         final recentList = await StorageService.instance.upsertRecentDevice(
           id: deviceId,
           type: 'ble',
@@ -149,15 +151,15 @@ class ConnectionNotifier extends StateNotifier<TransportState> {
 
         await _fetchInitialData(service);
         state = TransportState.connected;
-        final typeStr =
-            mode == ConnectionMode.kiss ? 'serialKiss' : 'serialCompanion';
-        // Prefer the radio's configured node name; fall back to the USB
-        // device name so the reconnect button always shows something.
+        // Start foreground service to prevent Doze mode from killing the connection
         final radioNodeName = _ref.read(selfInfoProvider)?.name;
         final displayName =
             (radioNodeName != null && radioNodeName.isNotEmpty)
                 ? radioNodeName
                 : deviceName;
+        await NotificationService.instance.startRadioForeground(displayName);
+        final typeStr =
+            mode == ConnectionMode.kiss ? 'serialKiss' : 'serialCompanion';
         final recentList = await StorageService.instance.upsertRecentDevice(
           id: deviceId,
           type: typeStr,
@@ -271,18 +273,18 @@ class ConnectionNotifier extends StateNotifier<TransportState> {
         await _fetchInitialData(service);
         state = TransportState.connected;
 
-        // Type strings distinguish Web Serial from native serial in the recent
-        // devices list so the reconnect button calls the correct entry point.
-        final typeStr =
-            mode == ConnectionMode.kiss ? 'webSerialKiss' : 'webSerial';
-
-        // Prefer the radio's configured node name; fall back to the port label
-        // so the reconnect button always shows a meaningful name.
+        // Start foreground service to prevent Doze mode from killing the connection
         final radioNodeName = _ref.read(selfInfoProvider)?.name;
         final displayName =
             (radioNodeName != null && radioNodeName.isNotEmpty)
                 ? radioNodeName
                 : deviceName;
+        await NotificationService.instance.startRadioForeground(displayName);
+
+        // Type strings distinguish Web Serial from native serial in the recent
+        // devices list so the reconnect button calls the correct entry point.
+        final typeStr =
+            mode == ConnectionMode.kiss ? 'webSerialKiss' : 'webSerial';
 
         final recentList = await StorageService.instance.upsertRecentDevice(
           id: deviceId,
@@ -340,6 +342,8 @@ class ConnectionNotifier extends StateNotifier<TransportState> {
   Future<void> disconnect() async {
     _manualDisconnect = true;
     _reconnectCancelled = true;
+    // Stop the foreground service immediately
+    await NotificationService.instance.stopRadioForeground();
     _batteryPollTimer?.cancel();
     _batteryPollTimer = null;
     _keepaliveTimer?.cancel();
@@ -491,6 +495,9 @@ class ConnectionNotifier extends StateNotifier<TransportState> {
     _connectionLostSub?.cancel();
     _connectionLostSub = service.connectionLost.listen((_) async {
       if (state != TransportState.connected) return;
+
+      // Stop the foreground service immediately when connection is lost
+      await NotificationService.instance.stopRadioForeground();
 
       _batteryPollTimer?.cancel();
       _batteryPollTimer = null;
