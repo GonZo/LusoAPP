@@ -694,15 +694,9 @@ class ConnectionNotifier extends StateNotifier<TransportState> {
                     _ref.read(plan333ConfigProvider).stationName.trim();
                 if (myStation.isEmpty ||
                     cq.stationName.toLowerCase() != myStation.toLowerCase()) {
-                  // Deduplicate — same station sends up to 3 CQs per event.
-                  final log = _ref.read(qslLogProvider);
-                  if (!log.any(
-                    (r) =>
-                        r.stationName.toLowerCase() ==
-                        cq.stationName.toLowerCase(),
-                  )) {
-                    _ref.read(qslLogProvider.notifier).add(cq);
-                  }
+                  _ref
+                      .read(qslLogProvider.notifier)
+                      .add(cq, incrementCount: true);
                 }
               }
             }

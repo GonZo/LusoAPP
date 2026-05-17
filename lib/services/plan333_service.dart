@@ -273,6 +273,7 @@ class QslRecord {
     required this.hops,
     required this.location,
     required this.timestamp,
+    this.cqCount = 1,
     this.notes = '',
   });
 
@@ -281,6 +282,12 @@ class QslRecord {
     hops: normalizeHops((j['hops'] as int?) ?? 0),
     location: (j['location'] as String?) ?? '',
     timestamp: DateTime.fromMillisecondsSinceEpoch((j['ts'] as int?) ?? 0),
+    cqCount:
+        (() {
+          final rawCount = (j['cq_count'] as int?) ?? (j['cqCount'] as int?);
+          if (rawCount == null || rawCount < 1) return 1;
+          return rawCount > 3 ? 3 : rawCount;
+        })(),
     notes: (j['notes'] as String?) ?? '',
   );
 
@@ -303,8 +310,30 @@ class QslRecord {
   /// When the station was logged (local device time).
   final DateTime timestamp;
 
+  /// How many CQ messages were heard from this station during the event.
+  /// The MeshCore event expects up to 3 CQ messages.
+  final int cqCount;
+
   /// Optional free-form notes.
   final String notes;
+
+  QslRecord copyWith({
+    String? stationName,
+    int? hops,
+    String? location,
+    DateTime? timestamp,
+    int? cqCount,
+    String? notes,
+  }) => QslRecord(
+    stationName: stationName ?? this.stationName,
+    hops: hops ?? this.hops,
+    location: location ?? this.location,
+    timestamp: timestamp ?? this.timestamp,
+    cqCount: cqCount ?? this.cqCount,
+    notes: notes ?? this.notes,
+  );
+
+  bool get isComplete => cqCount >= 3;
 
   String get hopsLabel {
     final normalized = normalizeHops(hops);
@@ -316,6 +345,7 @@ class QslRecord {
     'hops': normalizeHops(hops),
     'location': location,
     'ts': timestamp.millisecondsSinceEpoch,
+    'cq_count': cqCount,
     'notes': notes,
   };
 }
@@ -399,14 +429,55 @@ class QslLogNotifier extends StateNotifier<List<QslRecord>> {
     }
   }
 
-  Future<void> add(QslRecord record) async {
+  Future<void> add(QslRecord record, {bool incrementCount = false}) async {
+    final stationName = record.stationName.trim();
+    if (stationName.isEmpty) return;
+
+    final index = state.indexWhere(
+      (r) => r.stationName.trim().toLowerCase() == stationName.toLowerCase(),
+    );
+
+    final nextCount =
+        incrementCount
+            ? (index >= 0
+                ? (state[index].cqCount < 3 ? state[index].cqCount + 1 : 3)
+                : 1)
+            : (record.cqCount < 1
+                ? 1
+                : (record.cqCount > 3 ? 3 : record.cqCount));
+
+    final updatedRecord = record.copyWith(cqCount: nextCount);
+
     if (_sessionStart == null) {
-      _sessionStart = Plan333Service.meshEventSessionStart(record.timestamp);
+      _sessionStart = Plan333Service.meshEventSessionStart(
+        updatedRecord.timestamp,
+      );
       await StorageService.instance.saveQslLogSessionStart(
         _sessionStart!.millisecondsSinceEpoch,
       );
     }
-    state = [record, ...state];
+
+    if (index >= 0) {
+      final existing = state[index];
+      final next = [...state];
+      next[index] = existing.copyWith(
+        hops: updatedRecord.hops,
+        location:
+            updatedRecord.location.isNotEmpty
+                ? updatedRecord.location
+                : existing.location,
+        timestamp: updatedRecord.timestamp,
+        cqCount: nextCount,
+        notes:
+            updatedRecord.notes.isNotEmpty
+                ? updatedRecord.notes
+                : existing.notes,
+      );
+      state = [next[index], ...next..removeAt(index)];
+    } else {
+      state = [updatedRecord, ...state];
+    }
+
     await _persist();
   }
 
