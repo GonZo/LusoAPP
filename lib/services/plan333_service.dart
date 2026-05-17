@@ -192,6 +192,22 @@ class Plan333Service {
     return d;
   }
 
+  /// Start time for the event cycle that should own [now].
+  ///
+  /// Returns the Saturday 21:00 that is currently active, or the next
+  /// upcoming Saturday 21:00 if [now] is before the weekly event starts.
+  static DateTime meshEventSessionStart(DateTime now) {
+    final daysUntilSaturday =
+        (DateTime.saturday - now.weekday + DateTime.daysPerWeek) %
+        DateTime.daysPerWeek;
+    final saturday = DateTime(
+      now.year,
+      now.month,
+      now.day,
+    ).add(Duration(days: daysUntilSaturday));
+    return DateTime(saturday.year, saturday.month, saturday.day, _meshHour, 0);
+  }
+
   /// Minute within the 21:xx hour at which CQ [index] (0-based) is sent.
   /// Slots: 21:02, 21:22, 21:42 — 20 min apart, starting 2 min in.
   static int cqTargetMinute(int index) => 2 + index * 20;
@@ -315,8 +331,12 @@ final qslLogProvider = StateNotifierProvider<QslLogNotifier, List<QslRecord>>(
 class QslLogNotifier extends StateNotifier<List<QslRecord>> {
   QslLogNotifier() : super([]);
 
+  DateTime? _sessionStart;
+
   Future<void> loadFromStorage() async {
     final raw = await StorageService.instance.loadQslLog();
+    final storedSessionStart =
+        await StorageService.instance.loadQslLogSessionStart();
     if (raw == null) return;
     try {
       final list = jsonDecode(raw) as List<dynamic>;
@@ -325,9 +345,67 @@ class QslLogNotifier extends StateNotifier<List<QslRecord>> {
               .map((e) => QslRecord.fromJson(e as Map<String, dynamic>))
               .toList();
     } catch (_) {}
+
+    if (state.isEmpty) {
+      _sessionStart = null;
+      await StorageService.instance.saveQslLogSessionStart(null);
+      return;
+    }
+
+    _sessionStart =
+        storedSessionStart != null
+            ? DateTime.fromMillisecondsSinceEpoch(storedSessionStart)
+            : Plan333Service.meshEventSessionStart(state.first.timestamp);
+
+    await ensureCurrentSession(DateTime.now());
+  }
+
+  Future<void> ensureCurrentSession(DateTime now) async {
+    if (state.isEmpty) {
+      if (_sessionStart != null) {
+        _sessionStart = null;
+        await StorageService.instance.saveQslLogSessionStart(null);
+      }
+      return;
+    }
+
+    if (!Plan333Service.isMeshEventActive(now)) {
+      if (_sessionStart == null) {
+        _sessionStart = Plan333Service.meshEventSessionStart(
+          state.first.timestamp,
+        );
+        await StorageService.instance.saveQslLogSessionStart(
+          _sessionStart!.millisecondsSinceEpoch,
+        );
+      }
+      return;
+    }
+
+    final expectedSessionStart = Plan333Service.meshEventSessionStart(now);
+    final actualSessionStart =
+        _sessionStart ??
+        Plan333Service.meshEventSessionStart(state.first.timestamp);
+
+    if (actualSessionStart != expectedSessionStart) {
+      await clearAll();
+      return;
+    }
+
+    if (_sessionStart == null) {
+      _sessionStart = actualSessionStart;
+      await StorageService.instance.saveQslLogSessionStart(
+        actualSessionStart.millisecondsSinceEpoch,
+      );
+    }
   }
 
   Future<void> add(QslRecord record) async {
+    if (_sessionStart == null) {
+      _sessionStart = Plan333Service.meshEventSessionStart(record.timestamp);
+      await StorageService.instance.saveQslLogSessionStart(
+        _sessionStart!.millisecondsSinceEpoch,
+      );
+    }
     state = [record, ...state];
     await _persist();
   }
@@ -336,11 +414,17 @@ class QslLogNotifier extends StateNotifier<List<QslRecord>> {
     final next = [...state];
     next.removeAt(index);
     state = next;
+    if (next.isEmpty) {
+      _sessionStart = null;
+      await StorageService.instance.saveQslLogSessionStart(null);
+    }
     await _persist();
   }
 
   Future<void> clearAll() async {
     state = [];
+    _sessionStart = null;
+    await StorageService.instance.saveQslLogSessionStart(null);
     await _persist();
   }
 
@@ -435,6 +519,9 @@ class Plan333AutoSendNotifier extends StateNotifier<Plan333AutoSendState> {
   Timer? _pollTimer;
 
   void _tick() {
+    unawaited(
+      _ref.read(qslLogProvider.notifier).ensureCurrentSession(DateTime.now()),
+    );
     _runAutomation(DateTime.now());
   }
 
