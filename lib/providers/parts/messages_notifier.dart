@@ -321,22 +321,36 @@ class MessagesNotifier extends StateNotifier<List<ChatMessage>> {
   }
 
   /// Returns the device-scoped storage key for a channel message conversation.
-  /// Falls back to the unscoped key when no radio is connected (e.g. on cold
-  /// startup before a connection is established).
+  /// Uses the currently connected radio's ID when available; falls back to the
+  /// most-recently-used device so that cold-start loads find the correct key.
+  /// Returns the legacy unscoped key only when no device is known at all.
   String _channelKey(int index) {
     final deviceId = _ref.read(currentRadioIdProvider);
     if (deviceId != null) {
       return 'ch_${StorageService.sanitizeId(deviceId)}_$index';
+    }
+    // Not connected yet — use the last known device so offline cache loads
+    // from the same key that was used to save messages in the previous session.
+    final recent = _ref.read(recentDevicesProvider);
+    if (recent.isNotEmpty) {
+      return 'ch_${StorageService.sanitizeId(recent.first.id)}_$index';
     }
     return 'ch_$index';
   }
 
   /// Lazily load persisted messages for a channel index.
   Future<void> ensureLoadedForChannel(int index) async {
-    final key = _channelKey(index);
-    if (_loadedKeys.contains(key)) return;
-    _loadedKeys.add(key);
-    final stored = await StorageService.instance.loadMessages(key);
+    final scopedKey = _channelKey(index);
+    if (_loadedKeys.contains(scopedKey)) return;
+    _loadedKeys.add(scopedKey);
+    var stored = await StorageService.instance.loadMessages(scopedKey);
+    // Migration fallback: if nothing found at the scoped key, check the
+    // legacy unscoped key so users who upgraded keep their message history.
+    final legacyKey = 'ch_$index';
+    if (stored.isEmpty && scopedKey != legacyKey) {
+      stored = await StorageService.instance.loadMessages(legacyKey);
+      _loadedKeys.add(legacyKey); // prevent a redundant load later
+    }
     if (stored.isEmpty) return;
     _mergeStored(stored);
   }

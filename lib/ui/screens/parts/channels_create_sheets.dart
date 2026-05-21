@@ -103,7 +103,13 @@ class _CreateChannelSheet extends StatefulWidget {
     required this.type,
     required this.maxChannels,
     required this.usedIndices,
-    required this.existingChannels,
+
+    /// The radio this channel will be added to, together with its existing
+    /// channels.  Duplicate detection is scoped to [targetDevice.channels],
+    /// so the same key on a *different* radio is never treated as a conflict.
+    /// In a multi-device UI, construct a separate [_TargetDevice] per radio
+    /// and pass the appropriate one here.
+    required this.targetDevice,
     required this.onSave,
     this.prefillName,
     this.prefillSecret,
@@ -112,7 +118,7 @@ class _CreateChannelSheet extends StatefulWidget {
   final _ChannelType type;
   final int maxChannels;
   final Set<int> usedIndices;
-  final List<ChannelInfo> existingChannels;
+  final _TargetDevice targetDevice;
   final Future<void> Function(int index, String name, Uint8List secret) onSave;
   final String? prefillName;
   final Uint8List? prefillSecret;
@@ -214,17 +220,21 @@ class _CreateChannelSheetState extends State<_CreateChannelSheet> {
 
     if (_nameError != null || _secretError != null || secret == null) return;
 
-    // Check for duplicate channel (same secret key already exists)
+    // Check for duplicate channel (same secret key already exists on this device)
     final secretHex = _toHex(secret);
     final duplicate =
-        widget.existingChannels.where((c) {
+        widget.targetDevice.channels.where((c) {
           if (c.secret == null) return false;
           return _toHex(c.secret!) == secretHex;
         }).firstOrNull;
     if (duplicate != null) {
+      final devicePart =
+          widget.targetDevice.label != null
+              ? ' em "${widget.targetDevice.label}"'
+              : '';
       setState(() {
         _nameError =
-            'Este canal já existe (slot ${duplicate.index}: ${duplicate.name})';
+            'Este canal já existe$devicePart (slot ${duplicate.index}: ${duplicate.name})';
       });
       return;
     }
