@@ -157,6 +157,7 @@ class _ChannelsListScreenState extends ConsumerState<ChannelsListScreen> {
                   type: type,
                   maxChannels: maxChannels,
                   usedIndices: usedIndices,
+                  existingChannels: configured,
                 );
               },
               onScanQr: () {
@@ -164,6 +165,7 @@ class _ChannelsListScreenState extends ConsumerState<ChannelsListScreen> {
                 _scanQrToCreate(
                   maxChannels: maxChannels,
                   usedIndices: usedIndices,
+                  existingChannels: configured,
                 );
               },
             ),
@@ -268,6 +270,7 @@ class _ChannelsListScreenState extends ConsumerState<ChannelsListScreen> {
     required _ChannelType type,
     required int maxChannels,
     required Set<int> usedIndices,
+    required List<ChannelInfo> existingChannels,
     String? prefillName,
     Uint8List? prefillSecret,
   }) {
@@ -280,6 +283,7 @@ class _ChannelsListScreenState extends ConsumerState<ChannelsListScreen> {
             type: type,
             maxChannels: maxChannels,
             usedIndices: usedIndices,
+            existingChannels: existingChannels,
             prefillName: prefillName,
             prefillSecret: prefillSecret,
             onSave: (idx, name, secret) async {
@@ -296,6 +300,7 @@ class _ChannelsListScreenState extends ConsumerState<ChannelsListScreen> {
   Future<void> _scanQrToCreate({
     required int maxChannels,
     required Set<int> usedIndices,
+    required List<ChannelInfo> existingChannels,
   }) async {
     final raw = await Navigator.of(context).push<String>(
       MaterialPageRoute(
@@ -311,6 +316,7 @@ class _ChannelsListScreenState extends ConsumerState<ChannelsListScreen> {
         type: _ChannelType.privateJoin,
         maxChannels: maxChannels,
         usedIndices: usedIndices,
+        existingChannels: existingChannels,
         prefillName: result.name,
         prefillSecret: result.secret,
       );

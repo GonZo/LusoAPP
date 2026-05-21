@@ -103,6 +103,7 @@ class _CreateChannelSheet extends StatefulWidget {
     required this.type,
     required this.maxChannels,
     required this.usedIndices,
+    required this.existingChannels,
     required this.onSave,
     this.prefillName,
     this.prefillSecret,
@@ -111,6 +112,7 @@ class _CreateChannelSheet extends StatefulWidget {
   final _ChannelType type;
   final int maxChannels;
   final Set<int> usedIndices;
+  final List<ChannelInfo> existingChannels;
   final Future<void> Function(int index, String name, Uint8List secret) onSave;
   final String? prefillName;
   final Uint8List? prefillSecret;
@@ -211,6 +213,21 @@ class _CreateChannelSheetState extends State<_CreateChannelSheet> {
     });
 
     if (_nameError != null || _secretError != null || secret == null) return;
+
+    // Check for duplicate channel (same secret key already exists)
+    final secretHex = _toHex(secret);
+    final duplicate =
+        widget.existingChannels.where((c) {
+          if (c.secret == null) return false;
+          return _toHex(c.secret!) == secretHex;
+        }).firstOrNull;
+    if (duplicate != null) {
+      setState(() {
+        _nameError =
+            'Este canal já existe (slot ${duplicate.index}: ${duplicate.name})';
+      });
+      return;
+    }
 
     // For hashtag channels: prefix name with '#' if not already present
     final finalName =
