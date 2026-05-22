@@ -17,6 +17,7 @@ class ConnectionNotifier extends StateNotifier<TransportState> {
   StreamSubscription<AppLifecycleState>? _lifecycleSub;
   Timer? _batteryPollTimer;
   Timer? _keepaliveTimer;
+  Timer? _contactsRefreshDebounce;
 
   /// Set to true in [disconnect] to abort any in-progress reconnect loop.
   bool _reconnectCancelled = false;
@@ -25,6 +26,17 @@ class ConnectionNotifier extends StateNotifier<TransportState> {
 
   static const _keepaliveFgInterval = Duration(seconds: 15);
   static const _keepaliveBgInterval = Duration(seconds: 7);
+
+  void _scheduleContactsRefresh(
+    RadioService service, {
+    Duration delay = const Duration(seconds: 2),
+  }) {
+    _contactsRefreshDebounce?.cancel();
+    _contactsRefreshDebounce = Timer(delay, () {
+      if (state != TransportState.connected) return;
+      service.requestContacts().catchError((_) {});
+    });
+  }
 
   void _setStep(int step, String label) {
     _ref.read(connectionProgressProvider.notifier).state = step;
@@ -348,6 +360,8 @@ class ConnectionNotifier extends StateNotifier<TransportState> {
     _batteryPollTimer = null;
     _keepaliveTimer?.cancel();
     _keepaliveTimer = null;
+    _contactsRefreshDebounce?.cancel();
+    _contactsRefreshDebounce = null;
     await _connectionLostSub?.cancel();
     _connectionLostSub = null;
     await _responseSub?.cancel();
@@ -453,6 +467,12 @@ class ConnectionNotifier extends StateNotifier<TransportState> {
       if (service != null && state == TransportState.connected) {
         _startKeepalive(service, interval: _keepaliveFgInterval);
         service.requestBattAndStorage().catchError((_) {});
+        // Pull an updated contact snapshot after resume so contacts heard
+        // while backgrounded appear without app restart.
+        _scheduleContactsRefresh(
+          service,
+          delay: const Duration(milliseconds: 800),
+        );
         return;
       }
       if (!_manualDisconnect) {
@@ -558,6 +578,7 @@ class ConnectionNotifier extends StateNotifier<TransportState> {
     _lifecycleSub?.cancel();
     _keepaliveTimer?.cancel();
     _batteryPollTimer?.cancel();
+    _contactsRefreshDebounce?.cancel();
     _connectionLostSub?.cancel();
     _responseSub?.cancel();
     super.dispose();
@@ -820,6 +841,14 @@ class ConnectionNotifier extends StateNotifier<TransportState> {
           _ref
               .read(contactsProvider.notifier)
               .upsertFromAdvert(publicKey, type, name);
+          if (isNew && name.trim().isNotEmpty) {
+            final service = _ref.read(radioServiceProvider);
+            if (service != null) {
+              // Keep the radio-contacts snapshot in sync after new advert
+              // events so the Contacts screen updates without relaunch.
+              _scheduleContactsRefresh(service);
+            }
+          }
           // When pushNewAdvert (isNew=true) the radio may NOT have added the
           // contact to its own table (manual-contact mode). Write it back
           // explicitly — but only if the user's auto-add setting allows this
