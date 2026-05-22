@@ -1299,7 +1299,25 @@ class ConnectionNotifier extends StateNotifier<TransportState> {
       (r) => r is OkResponse || r is ErrorResponse,
       timeout: const Duration(seconds: 5),
     );
-    return resp is OkResponse;
+    if (resp is! OkResponse) return false;
+
+    // The firmware applied the new identity in-memory immediately (no reboot).
+    // Re-send APP_START so the radio replies with a fresh SelfInfoResponse
+    // carrying the new public key, then re-sync contacts (the firmware called
+    // resetContacts() + loadContacts() internally after the key swap).
+    final selfResp = await _sendAndWait(
+      service,
+      () => service.requestSelfInfo(),
+      (r) => r is SelfInfoResponse,
+      timeout: const Duration(seconds: 5),
+    );
+    if (selfResp is SelfInfoResponse) {
+      _ref.read(selfInfoProvider.notifier).state = selfResp.info;
+      _ref.read(radioConfigProvider.notifier).state = selfResp.info.radioConfig;
+    }
+    // Re-sync contacts because the firmware invalidated its ECDH cache.
+    unawaited(service.requestContacts().catchError((_) {}));
+    return true;
   }
 }
 

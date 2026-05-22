@@ -722,16 +722,62 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get settingsRestorePrivateKeyContent =>
-      'The radio will restart automatically after restoration. Proceed?';
+      'This will replace the radio\'s current private key. The new identity is applied immediately — the public key in the app will be updated.\n\nAre you sure?';
 
   @override
   String get settingsDeleteBackupTitle => 'Delete backup';
 
   @override
-  String get settingsKeySavedSuccess => 'Private key copy saved successfully';
+  String get settingsKeySavedSuccess => 'Private key saved successfully.';
 
   @override
-  String get settingsKeyImportedSuccess => 'Key imported successfully';
+  String get settingsKeyImportedSuccess =>
+      'Key restored successfully. Public key updated.';
+
+  @override
+  String get settingsKeyExportFailed =>
+      'Export failed. Firmware may not have support enabled.';
+
+  @override
+  String get settingsKeyRestoreFailed =>
+      'Restore failed. Firmware may not have support enabled.';
+
+  @override
+  String get settingsDeleteBackupContent =>
+      'The private key backup stored on this device will be deleted. The radio is not affected.';
+
+  @override
+  String get settingsKeyCopied => 'Private key copied';
+
+  @override
+  String get settingsKeyCopySaved => 'Copy saved on this device.';
+
+  @override
+  String get settingsCopyKeyTooltip => 'Copy full key';
+
+  @override
+  String get settingsKeyConnectToBackup =>
+      'Connect to the radio to back up the key.';
+
+  @override
+  String get settingsKeyShareSubject => 'MeshCore — private key backup';
+
+  @override
+  String get settingsPasteKeyTitle => 'Paste private key';
+
+  @override
+  String get settingsPasteKeyHint =>
+      'Paste the private key from a previous backup (128 hex characters).';
+
+  @override
+  String get settingsKeyHexLabel => 'Private key (hex)';
+
+  @override
+  String get settingsKeyInvalidHex =>
+      'Invalid key — must be exactly 128 hexadecimal characters.';
+
+  @override
+  String get commonContinue => 'Continue';
 
   @override
   String get settingsAbout => 'About';

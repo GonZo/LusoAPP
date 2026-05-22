@@ -729,17 +729,62 @@ class AppLocalizationsEs extends AppLocalizations {
 
   @override
   String get settingsRestorePrivateKeyContent =>
-      'La radio se reiniciará automáticamente tras la restauración. ¿Continuar?';
+      'Esta operación reemplazará la clave privada actual de la radio. La nueva identidad se aplica inmediatamente — la clave pública en la app se actualizará.\n\n¿Estás seguro?';
 
   @override
   String get settingsDeleteBackupTitle => 'Eliminar copia de seguridad';
 
   @override
-  String get settingsKeySavedSuccess =>
-      'Copia de clave privada guardada con éxito';
+  String get settingsKeySavedSuccess => 'Clave privada guardada con éxito.';
 
   @override
-  String get settingsKeyImportedSuccess => 'Clave importada con éxito';
+  String get settingsKeyImportedSuccess =>
+      'Clave restaurada con éxito. Clave pública actualizada.';
+
+  @override
+  String get settingsKeyExportFailed =>
+      'Exportación fallida. El firmware puede no tener soporte activado.';
+
+  @override
+  String get settingsKeyRestoreFailed =>
+      'Restauración fallida. El firmware puede no tener soporte activado.';
+
+  @override
+  String get settingsDeleteBackupContent =>
+      'La copia de clave privada guardada en este dispositivo será eliminada. La radio no se ve afectada.';
+
+  @override
+  String get settingsKeyCopied => 'Clave privada copiada';
+
+  @override
+  String get settingsKeyCopySaved => 'Copia guardada en este dispositivo.';
+
+  @override
+  String get settingsCopyKeyTooltip => 'Copiar clave completa';
+
+  @override
+  String get settingsKeyConnectToBackup =>
+      'Conecta la radio para hacer una copia de seguridad de la clave.';
+
+  @override
+  String get settingsKeyShareSubject => 'MeshCore — copia de clave privada';
+
+  @override
+  String get settingsPasteKeyTitle => 'Pegar clave privada';
+
+  @override
+  String get settingsPasteKeyHint =>
+      'Pega aquí la clave privada de una copia anterior (128 caracteres hex).';
+
+  @override
+  String get settingsKeyHexLabel => 'Clave privada (hex)';
+
+  @override
+  String get settingsKeyInvalidHex =>
+      'Clave inválida — debe tener exactamente 128 caracteres hexadecimales.';
+
+  @override
+  String get commonContinue => 'Continuar';
 
   @override
   String get settingsAbout => 'Acerca de';
