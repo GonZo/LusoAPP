@@ -75,6 +75,7 @@ class ConnectionNotifier extends StateNotifier<TransportState> {
             .read(channelsProvider.notifier)
             .loadFromStorageForRadio(deviceId);
         await _ref.read(mutedChannelsProvider.notifier).loadForRadio(deviceId);
+        await _ref.read(blockedSendersProvider.notifier).loadForRadio(deviceId);
         await _ref.read(advertAutoAddProvider.notifier).loadForRadio(deviceId);
 
         await _fetchInitialData(service);
@@ -159,6 +160,7 @@ class ConnectionNotifier extends StateNotifier<TransportState> {
             .read(channelsProvider.notifier)
             .loadFromStorageForRadio(deviceId);
         await _ref.read(mutedChannelsProvider.notifier).loadForRadio(deviceId);
+        await _ref.read(blockedSendersProvider.notifier).loadForRadio(deviceId);
         await _ref.read(advertAutoAddProvider.notifier).loadForRadio(deviceId);
 
         await _fetchInitialData(service);
@@ -280,6 +282,7 @@ class ConnectionNotifier extends StateNotifier<TransportState> {
             .read(channelsProvider.notifier)
             .loadFromStorageForRadio(deviceId);
         await _ref.read(mutedChannelsProvider.notifier).loadForRadio(deviceId);
+        await _ref.read(blockedSendersProvider.notifier).loadForRadio(deviceId);
         await _ref.read(advertAutoAddProvider.notifier).loadForRadio(deviceId);
 
         await _fetchInitialData(service);
@@ -694,6 +697,16 @@ class ConnectionNotifier extends StateNotifier<TransportState> {
               finalMessage = message.copyWith(packetHashHex: pendingHash);
             }
           }
+          // Discard messages from blocked senders before touching state or
+          // unread counts (parity with MeshCoreOne SyncCoordinator gate).
+          if (!finalMessage.isOutgoing) {
+            final senderName = finalMessage.senderName;
+            if (senderName != null && senderName.isNotEmpty) {
+              if (_ref.read(blockedSendersProvider).contains(senderName)) {
+                break;
+              }
+            }
+          }
           _ref.read(messagesProvider.notifier).addMessage(finalMessage);
           // Auto-log incoming CQ Plano 333 messages on the #plano333 channel
           // as stations heard.
@@ -729,14 +742,20 @@ class ConnectionNotifier extends StateNotifier<TransportState> {
                 _ref
                     .read(mutedChannelsProvider)
                     .contains(message.channelIndex!);
-            if (message.channelIndex != null) {
+            // Do not increment unread or fire an OS notification when the
+            // user is currently viewing this channel (parity with MeshCoreOne
+            // activeChannelIndex / activeChannelDeviceID guard).
+            final isViewingChannel =
+                message.channelIndex != null &&
+                _ref.read(activeChannelIndexProvider) == message.channelIndex;
+            if (message.channelIndex != null && !isViewingChannel) {
               _ref
                   .read(unreadCountsProvider.notifier)
                   .incrementChannel(message.channelIndex!);
             }
             // Notifications (OS alert + app-icon badge) are suppressed for
             // muted channels; the in-app unread badge is still shown above.
-            if (!isMuted) {
+            if (!isMuted && !isViewingChannel) {
               final channels = _ref.read(channelsProvider);
               final idx = message.channelIndex ?? 0;
               final channel = channels.where((c) => c.index == idx).firstOrNull;

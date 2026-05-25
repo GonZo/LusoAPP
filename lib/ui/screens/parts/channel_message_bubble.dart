@@ -449,6 +449,69 @@ class _MessageBubble extends ConsumerWidget {
                         );
                       },
                     ),
+                  // Block-sender — only for incoming messages from a named node.
+                  if (!msg.isOutgoing &&
+                      msg.senderName != null &&
+                      msg.senderName!.isNotEmpty)
+                    ListTile(
+                      leading: Icon(
+                        Icons.block,
+                        color: theme.colorScheme.error,
+                      ),
+                      title: Text(
+                        'Bloquear ${msg.senderName}',
+                        style: TextStyle(color: theme.colorScheme.error),
+                      ),
+                      onTap: () async {
+                        Navigator.pop(context);
+                        final blocked = ref.read(blockedSendersProvider);
+                        final name = msg.senderName!;
+                        if (blocked.contains(name)) {
+                          await ref
+                              .read(blockedSendersProvider.notifier)
+                              .unblock(name);
+                          if (context.mounted) {
+                            ScaffoldMessenger.of(context).showSnackBar(
+                              SnackBar(
+                                content: Text('$name desbloqueado'),
+                                duration: const Duration(seconds: 2),
+                              ),
+                            );
+                          }
+                        } else {
+                          final confirmed = await showDialog<bool>(
+                            context: context,
+                            builder:
+                                (ctx) => AlertDialog(
+                                  title: const Text('Bloquear remetente'),
+                                  content: Text(
+                                    'As mensagens de "$name" deixarão de aparecer neste canal. Desbloquear nas definições.',
+                                  ),
+                                  actions: [
+                                    TextButton(
+                                      onPressed:
+                                          () => Navigator.pop(ctx, false),
+                                      child: const Text('Cancelar'),
+                                    ),
+                                    FilledButton(
+                                      style: FilledButton.styleFrom(
+                                        backgroundColor:
+                                            theme.colorScheme.error,
+                                      ),
+                                      onPressed: () => Navigator.pop(ctx, true),
+                                      child: const Text('Bloquear'),
+                                    ),
+                                  ],
+                                ),
+                          );
+                          if (confirmed == true) {
+                            await ref
+                                .read(blockedSendersProvider.notifier)
+                                .block(name);
+                          }
+                        }
+                      },
+                    ),
                   ListTile(
                     leading: const Icon(Icons.copy),
                     title: Text(context.l10n.commonCopyText),

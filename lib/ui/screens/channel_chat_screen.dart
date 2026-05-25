@@ -46,6 +46,12 @@ class _ChannelChatScreenState extends ConsumerState<ChannelChatScreen> {
   void initState() {
     super.initState();
     _scrollController.addListener(_onScroll);
+    // Register as the active channel so incoming messages on this channel
+    // do not produce badge increments or OS notifications while we are here.
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (!mounted) return;
+      ref.read(activeChannelIndexProvider.notifier).state = widget.channelIndex;
+    });
     WidgetsBinding.instance.addPostFrameCallback((_) async {
       if (!mounted) return;
       // Capture unread count BEFORE clearing it.
@@ -86,6 +92,9 @@ class _ChannelChatScreenState extends ConsumerState<ChannelChatScreen> {
     _textController.clear();
     _atBottom = true;
     _firstUnreadIndex = -1;
+
+    // Re-register as the new active channel.
+    ref.read(activeChannelIndexProvider.notifier).state = widget.channelIndex;
 
     WidgetsBinding.instance.addPostFrameCallback((_) async {
       if (!mounted) return;
@@ -131,6 +140,9 @@ class _ChannelChatScreenState extends ConsumerState<ChannelChatScreen> {
   void dispose() {
     _textController.dispose();
     _scrollController.dispose();
+    // Clear active-channel registration so notifications resume for this
+    // channel once the user navigates away.
+    ref.read(activeChannelIndexProvider.notifier).state = -1;
     super.dispose();
   }
 

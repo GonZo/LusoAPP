@@ -302,6 +302,32 @@ class ContactsNotifier extends StateNotifier<List<Contact>> {
     return before - next.length;
   }
 
+  /// Remove contacts based on the provided [config].
+  /// Filters by staleness and contact type (chat, repeater, room, sensor).
+  /// Returns the number of stale contacts that were removed.
+  int pruneStaleContactsWithConfig(PruneConfig config) {
+    final before = state.length;
+    final next = state.where((c) => !config.shouldPrune(c)).toList();
+    if (next.length == before) return 0; // No matching contacts
+    state = next;
+    _rebuildIndex(next);
+    StorageService.instance.saveContacts(next);
+    return before - next.length;
+  }
+
+  /// Remove all contacts not heard from in more than [daysThreshold] days.
+  /// Default threshold is 7 days. Does not filter by type.
+  /// For type-aware filtering, use [pruneStaleContactsWithConfig].
+  int pruneStaleContacts({int daysThreshold = 7}) {
+    final before = state.length;
+    final next = state.where((c) => !c.isStaleAfter(daysThreshold)).toList();
+    if (next.length == before) return 0; // No stale contacts
+    state = next;
+    _rebuildIndex(next);
+    StorageService.instance.saveContacts(next);
+    return before - next.length;
+  }
+
   /// Update lastModified on the contact matched by the 6-byte key prefix.
   /// Called on every incoming private message and every 0x88 advert frame.
   /// Uses the O(1) hex6 index so it never scans the list.
@@ -711,6 +737,62 @@ final autoReconnectProvider =
       (ref) => AutoReconnectNotifier(),
     );
 
+// ---------------------------------------------------------------------------
+// Prune configuration
+// ---------------------------------------------------------------------------
+
+class PruneConfigNotifier extends StateNotifier<PruneConfig> {
+  PruneConfigNotifier() : super(PruneConfig.defaultConfig) {
+    _load();
+  }
+
+  static const _key = 'prune_config_v1';
+
+  Future<void> _load() async {
+    final prefs = await SharedPreferences.getInstance();
+    final jsonStr = prefs.getString(_key);
+    if (jsonStr != null) {
+      try {
+        final json = jsonDecode(jsonStr) as Map<String, dynamic>;
+        state = PruneConfig.fromJson(json);
+      } catch (e) {
+        // Fallback to default if parsing fails
+        state = PruneConfig.defaultConfig;
+      }
+    }
+  }
+
+  Future<void> update(PruneConfig config) async {
+    state = config;
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setString(_key, jsonEncode(config.toJson()));
+  }
+
+  /// Convenience methods for updating individual fields
+  Future<void> setDaysThreshold(int days) async =>
+      update(state.copyWith(daysThreshold: days));
+
+  Future<void> setPruneChats(bool value) async =>
+      update(state.copyWith(pruneChats: value));
+
+  Future<void> setPruneRepeaters(bool value) async =>
+      update(state.copyWith(pruneRepeaters: value));
+
+  Future<void> setPruneRooms(bool value) async =>
+      update(state.copyWith(pruneRooms: value));
+
+  Future<void> setPruneSensors(bool value) async =>
+      update(state.copyWith(pruneSensors: value));
+
+  /// Reset to default configuration
+  Future<void> reset() async => update(PruneConfig.defaultConfig);
+}
+
+final pruneConfigProvider =
+    StateNotifierProvider<PruneConfigNotifier, PruneConfig>(
+      (ref) => PruneConfigNotifier(),
+    );
+
 /// Returns the first 6 bytes of [key] as a lowercase hex string.
 String _hex6(Uint8List key) =>
     key.take(6).map((b) => b.toRadixString(16).padLeft(2, '0')).join();
@@ -928,8 +1010,7 @@ typedef PathCacheEntry = ({List<int> hops, int hashSize});
 /// Cache of outbound path per contact, keyed by 6-byte pubKeyPrefix hex.
 /// Populated whenever a PathDiscoveryPush (0x8D) is received.
 /// Used by the trace flow to supply correct hop-hash path bytes.
-final pathCacheProvider =
-    StateProvider<Map<String, PathCacheEntry>>((_) => {});
+final pathCacheProvider = StateProvider<Map<String, PathCacheEntry>>((_) => {});
 
 // ---------------------------------------------------------------------------
 // Repeater remote-admin
@@ -1432,3 +1513,71 @@ class AccentColorNotifier extends StateNotifier<Color?> {
 final accentColorProvider = StateNotifierProvider<AccentColorNotifier, Color?>(
   (ref) => AccentColorNotifier(),
 );
+
+// ---------------------------------------------------------------------------
+// Blocked channel senders
+// ---------------------------------------------------------------------------
+// A user can long-press a channel message and "block" the sender node name.
+// Blocked senders are persisted per-radio so the list survives app restarts.
+// Incoming channel messages from a blocked name are discarded before reaching
+// state, unread counts, or OS notifications — matching MeshCoreOne behaviour.
+
+class BlockedSendersNotifier extends StateNotifier<Set<String>> {
+  BlockedSendersNotifier() : super(const {});
+
+  static const _prefsKeyPrefix = 'blocked_senders_';
+  String? _activeDeviceId;
+
+  /// Load the blocked-senders list for [deviceId].
+  Future<void> loadForRadio(String deviceId) async {
+    _activeDeviceId = deviceId;
+    final prefs = await SharedPreferences.getInstance();
+    final raw = prefs.getStringList('$_prefsKeyPrefix$deviceId') ?? [];
+    state = raw.toSet();
+  }
+
+  void _clearForDisconnect() {
+    _activeDeviceId = null;
+    state = const {};
+  }
+
+  /// Add [senderName] to the blocked list.
+  Future<void> block(String senderName) async {
+    if (senderName.isEmpty) return;
+    state = {...state, senderName};
+    await _save();
+  }
+
+  /// Remove [senderName] from the blocked list.
+  Future<void> unblock(String senderName) async {
+    state = state.difference({senderName});
+    await _save();
+  }
+
+  bool isBlocked(String senderName) => state.contains(senderName);
+
+  Future<void> _save() async {
+    if (_activeDeviceId == null) return;
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setStringList(
+      '$_prefsKeyPrefix$_activeDeviceId',
+      state.toList(),
+    );
+  }
+}
+
+final blockedSendersProvider =
+    StateNotifierProvider<BlockedSendersNotifier, Set<String>>(
+      (ref) => BlockedSendersNotifier(),
+    );
+
+// ---------------------------------------------------------------------------
+// Active channel tracking (for notification-suppression parity with MC1)
+// ---------------------------------------------------------------------------
+// When the user navigates into a channel chat screen, that screen registers
+// itself as the "active" channel index.  On leaving, it clears back to -1.
+// connection_notifier reads this before incrementing unread counts and firing
+// OS notifications — messages on the channel currently being viewed do not
+// produce a badge increment or an OS alert.
+
+final activeChannelIndexProvider = StateProvider<int>((_) => -1);

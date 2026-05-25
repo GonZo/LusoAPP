@@ -132,6 +132,17 @@ class Contact extends Equatable {
   String get searchKey =>
       '${displayName.toLowerCase()} ${name.toLowerCase()} ${shortId.toLowerCase()}';
 
+  /// Whether this contact has not been heard from for more than [days] days.
+  /// Default is 7 days. Used to prune old contacts when adding new ones to the radio.
+  bool isStaleAfter(int days) {
+    final now = DateTime.now().millisecondsSinceEpoch ~/ 1000;
+    final thresholdInSeconds = days * 24 * 60 * 60;
+    return (now - lastAdvertTimestamp) > thresholdInSeconds;
+  }
+
+  /// Convenience getter: whether contact is stale after default 7 days.
+  bool get isStale => isStaleAfter(7);
+
   bool get isChat => type == 0x01;
   bool get isRepeater => type == 0x02;
   bool get isRoom => type == 0x03;
@@ -779,6 +790,96 @@ class RepeaterStats {
   }
 }
 
+/// Configuration for automatic contact pruning.
+/// Specifies which contact types should be pruned and after how many days.
+class PruneConfig extends Equatable {
+  const PruneConfig({
+    required this.daysThreshold,
+    required this.pruneChats,
+    required this.pruneRepeaters,
+    required this.pruneRooms,
+    required this.pruneSensors,
+  });
+
+  /// Days of inactivity before a contact is considered stale.
+  final int daysThreshold;
+
+  /// Whether to prune chat/personal contacts.
+  final bool pruneChats;
+
+  /// Whether to prune repeater contacts.
+  final bool pruneRepeaters;
+
+  /// Whether to prune room contacts.
+  final bool pruneRooms;
+
+  /// Whether to prune sensor contacts.
+  final bool pruneSensors;
+
+  /// Default configuration: prune after 7 days, include all types.
+  static const PruneConfig defaultConfig = PruneConfig(
+    daysThreshold: 7,
+    pruneChats: true,
+    pruneRepeaters: true,
+    pruneRooms: true,
+    pruneSensors: true,
+  );
+
+  /// Returns true if [contact] should be pruned based on this configuration.
+  bool shouldPrune(Contact contact) {
+    if (!contact.isStaleAfter(daysThreshold)) {
+      return false; // Not stale yet
+    }
+    if (contact.isChat && pruneChats) return true;
+    if (contact.isRepeater && pruneRepeaters) return true;
+    if (contact.isRoom && pruneRooms) return true;
+    if (contact.isSensor && pruneSensors) return true;
+    return false;
+  }
+
+  /// Convert to JSON for persistence.
+  Map<String, dynamic> toJson() => {
+    'daysThreshold': daysThreshold,
+    'pruneChats': pruneChats,
+    'pruneRepeaters': pruneRepeaters,
+    'pruneRooms': pruneRooms,
+    'pruneSensors': pruneSensors,
+  };
+
+  /// Load from JSON.
+  factory PruneConfig.fromJson(Map<String, dynamic> json) => PruneConfig(
+    daysThreshold: json['daysThreshold'] as int? ?? 7,
+    pruneChats: json['pruneChats'] as bool? ?? true,
+    pruneRepeaters: json['pruneRepeaters'] as bool? ?? true,
+    pruneRooms: json['pruneRooms'] as bool? ?? true,
+    pruneSensors: json['pruneSensors'] as bool? ?? true,
+  );
+
+  /// Create a copy with optional field overrides.
+  PruneConfig copyWith({
+    int? daysThreshold,
+    bool? pruneChats,
+    bool? pruneRepeaters,
+    bool? pruneRooms,
+    bool? pruneSensors,
+  }) => PruneConfig(
+    daysThreshold: daysThreshold ?? this.daysThreshold,
+    pruneChats: pruneChats ?? this.pruneChats,
+    pruneRepeaters: pruneRepeaters ?? this.pruneRepeaters,
+    pruneRooms: pruneRooms ?? this.pruneRooms,
+    pruneSensors: pruneSensors ?? this.pruneSensors,
+  );
+
+  @override
+  List<Object?> get props => [
+    daysThreshold,
+    pruneChats,
+    pruneRepeaters,
+    pruneRooms,
+    pruneSensors,
+  ];
+}
+
 /// Channel information returned by PACKET_CHANNEL_INFO (0x12).
 class ChannelInfo extends Equatable {
   const ChannelInfo({required this.index, required this.name, this.secret});
@@ -797,6 +898,19 @@ class ChannelInfo extends Equatable {
   /// Whether this channel slot is empty (no name and all-zero secret).
   bool get isEmpty =>
       name.isEmpty && (secret == null || secret!.every((b) => b == 0));
+
+  /// Whether this is the public channel (slot 0).
+  /// Slot 0 uses an all-zero secret and is shared across the MeshCore community.
+  bool get isPublic => index == 0;
+
+  /// Whether this is a hashtag channel (name starts with '#').
+  /// Hashtag channels use a publicly-derivable key (SHA-256 of the name).
+  bool get isHashtag => name.startsWith('#');
+
+  /// Whether this channel uses meaningful private encryption.
+  /// Public (slot 0) and hashtag channels use publicly-derivable keys, so
+  /// only named channels with a non-trivial secret are truly encrypted.
+  bool get isEncrypted => !isPublic && !isHashtag;
 
   Map<String, dynamic> toJson() => {
     'index': index,
