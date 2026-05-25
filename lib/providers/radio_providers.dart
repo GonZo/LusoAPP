@@ -920,10 +920,16 @@ class TraceRequestContext {
 final traceRequestContextProvider =
     StateProvider<Map<int, TraceRequestContext>>((_) => {});
 
-/// Cache of outPath bytes per contact, keyed by 6-byte pubKeyPrefix hex.
+/// Holds the outbound path for one contact.
+/// [hops] is one entry per hop (raw hash value, 1–3 bytes wide).
+/// [hashSize] is how many bytes each hop hash occupies on the wire (1, 2, or 3).
+typedef PathCacheEntry = ({List<int> hops, int hashSize});
+
+/// Cache of outbound path per contact, keyed by 6-byte pubKeyPrefix hex.
 /// Populated whenever a PathDiscoveryPush (0x8D) is received.
 /// Used by the trace flow to supply correct hop-hash path bytes.
-final pathCacheProvider = StateProvider<Map<String, List<int>>>((_) => {});
+final pathCacheProvider =
+    StateProvider<Map<String, PathCacheEntry>>((_) => {});
 
 // ---------------------------------------------------------------------------
 // Repeater remote-admin

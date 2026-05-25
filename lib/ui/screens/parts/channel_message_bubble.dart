@@ -520,13 +520,21 @@ class _MessageBubble extends ConsumerWidget {
   }
 
   void _showMsgDetails(BuildContext context, ChatMessage msg, ThemeData theme) {
+    final l10n = context.l10n;
     final time = DateTime.fromMillisecondsSinceEpoch(msg.timestamp * 1000);
     final timeStr =
         '${time.year}-${time.month.toString().padLeft(2, '0')}-${time.day.toString().padLeft(2, '0')} '
         '${time.hour.toString().padLeft(2, '0')}:${time.minute.toString().padLeft(2, '0')}:${time.second.toString().padLeft(2, '0')}';
     int? hops;
+    int? incomingHashSize;
     if (msg.pathLen != null) {
-      hops = msg.pathLen == 0xFF ? 0 : msg.pathLen! & 0x3F;
+      final pathLen = msg.pathLen!;
+      if (pathLen == 0xFF) {
+        hops = 0;
+      } else {
+        hops = pathLen & 0x3F;
+        incomingHashSize = (pathLen >> 6) + 1;
+      }
     }
     showModalBottomSheet<void>(
       context: context,
@@ -546,7 +554,7 @@ class _MessageBubble extends ConsumerWidget {
                       ),
                       const SizedBox(width: 8),
                       Text(
-                        'Detalhes da mensagem',
+                        l10n.chatMsgDetails,
                         style: theme.textTheme.titleSmall?.copyWith(
                           fontWeight: FontWeight.bold,
                         ),
@@ -556,18 +564,26 @@ class _MessageBubble extends ConsumerWidget {
                   const Divider(height: 20),
                   _DetailRow(
                     icon: Icons.access_time,
-                    label: 'Hora',
+                    label: l10n.commonTime,
                     value: timeStr,
                     theme: theme,
                   ),
                   if (hops != null)
                     _DetailRow(
                       icon: Icons.route,
-                      label: 'Caminho',
+                      label: l10n.commonPath,
                       value:
                           hops == 0
-                              ? 'Directo'
-                              : '$hops hop${hops > 1 ? 's' : ''}',
+                              ? l10n.commonDirect
+                              : '$hops ${hops == 1 ? l10n.commonSingularHop : l10n.commonPluralHops}',
+                      theme: theme,
+                    ),
+                  if (!msg.isOutgoing && incomingHashSize != null)
+                    _DetailRow(
+                      icon: Icons.pin,
+                      label: l10n.radioSettingsPathHashMode,
+                      value:
+                          '$incomingHashSize ${incomingHashSize == 1 ? 'byte' : 'bytes'}',
                       theme: theme,
                     ),
                   if (msg.snr != null)
@@ -577,10 +593,20 @@ class _MessageBubble extends ConsumerWidget {
                       value: '${msg.snr!.toStringAsFixed(1)} dB',
                       theme: theme,
                     ),
+                  if (msg.isOutgoing && msg.sentRouteFlag != null)
+                    _DetailRow(
+                      icon: Icons.send,
+                      label: l10n.privateSentVia,
+                      value:
+                          msg.sentRouteFlag == 0
+                              ? l10n.commonDirect
+                              : l10n.commonFlood,
+                      theme: theme,
+                    ),
                   if (msg.isChannel && msg.heardCount > 0)
                     _DetailRow(
                       icon: Icons.cell_tower,
-                      label: 'Repetidores',
+                      label: l10n.commonRepeaters,
                       value: '${msg.heardCount}',
                       theme: theme,
                     ),
@@ -829,16 +855,19 @@ class _MessageBubble extends ConsumerWidget {
                           );
                         },
                       ),
+                      Padding(
+                        padding: const EdgeInsets.only(top: 4),
+                        child: Align(
+                          alignment: Alignment.centerRight,
+                          child: Text(
+                            metaLine,
+                            style: theme.textTheme.labelSmall?.copyWith(
+                              color: theme.colorScheme.onSurface.withAlpha(100),
+                            ),
+                          ),
+                        ),
+                      ),
                     ],
-                  ),
-                ),
-                Padding(
-                  padding: const EdgeInsets.only(top: 3, left: 2),
-                  child: Text(
-                    metaLine,
-                    style: theme.textTheme.labelSmall?.copyWith(
-                      color: theme.colorScheme.onSurface.withAlpha(100),
-                    ),
                   ),
                 ),
                 const SizedBox(height: 2),

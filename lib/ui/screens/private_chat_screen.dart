@@ -465,8 +465,8 @@ class _PrivateChatScreenState extends ConsumerState<PrivateChatScreen> {
     Uint8List? pathBytes;
 
     final cached = ref.read(pathCacheProvider)[_prefix6Hex];
-    if (cached != null && cached.isNotEmpty) {
-      pathBytes = _outPathToBytes(cached);
+    if (cached != null && cached.hops.isNotEmpty) {
+      pathBytes = _outPathToBytes(cached.hops);
     } else {
       // Discover the path first — firmware needs hop-hash bytes, not the public key.
       final pubKeyPrefix = contact.publicKey.sublist(0, 6);
@@ -487,7 +487,7 @@ class _PrivateChatScreenState extends ConsumerState<PrivateChatScreen> {
           .whenComplete(sub.cancel);
 
       if (outPath != null && outPath.isNotEmpty) {
-        pathBytes = _outPathToBytes(outPath);
+        pathBytes = _outPathToBytes(outPath); // NOTE: re-encoding fixed in Commit 3
       }
     }
 

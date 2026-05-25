@@ -913,17 +913,21 @@ class ConnectionNotifier extends StateNotifier<TransportState> {
             }
             _ref.read(telemetryProvider.notifier).add(readings);
           }
-        case PathDiscoveryPush(:final pubKeyPrefix, :final outPath):
+        case PathDiscoveryPush(
+          :final pubKeyPrefix,
+          :final outPath,
+          :final outHashSize,
+        ):
           if (pubKeyPrefix.length >= 6 && outPath.isNotEmpty) {
             final prefixHex =
                 pubKeyPrefix
                     .sublist(0, 6)
                     .map((b) => b.toRadixString(16).padLeft(2, '0'))
                     .join();
-            final current = Map<String, List<int>>.from(
+            final current = Map<String, PathCacheEntry>.from(
               _ref.read(pathCacheProvider),
             );
-            current[prefixHex] = outPath;
+            current[prefixHex] = (hops: outPath, hashSize: outHashSize);
             _ref.read(pathCacheProvider.notifier).state = current;
           }
         case TraceDataPush(:final data):

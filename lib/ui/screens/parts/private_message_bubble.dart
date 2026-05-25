@@ -176,16 +176,23 @@ class _PrivateMessageBubble extends StatelessWidget {
   }
 
   void _showMsgDetails(BuildContext context, ChatMessage msg, ThemeData theme) {
+    final l10n = context.l10n;
     final time = DateTime.fromMillisecondsSinceEpoch(msg.timestamp * 1000);
     final timeStr =
         '${time.year}-${time.month.toString().padLeft(2, '0')}-${time.day.toString().padLeft(2, '0')} '
         '${time.hour.toString().padLeft(2, '0')}:${time.minute.toString().padLeft(2, '0')}:${time.second.toString().padLeft(2, '0')}';
 
     int? hops;
+    int? incomingHashSize;
     if (msg.pathLen != null) {
-      hops = msg.pathLen == 0xFF ? 0 : msg.pathLen! & 0x3F;
+      final pathLen = msg.pathLen!;
+      if (pathLen == 0xFF) {
+        hops = 0;
+      } else {
+        hops = pathLen & 0x3F;
+        incomingHashSize = (pathLen >> 6) + 1;
+      }
     } else if (msg.isOutgoing && msg.sentRouteFlag != null) {
-      // Outgoing direct route — use contact's known path length
       if (msg.sentRouteFlag == 0 &&
           contactPathLen != null &&
           contactPathLen != 0xFF) {
@@ -213,7 +220,7 @@ class _PrivateMessageBubble extends StatelessWidget {
                       ),
                       const SizedBox(width: 8),
                       Text(
-                        'Detalhes da mensagem',
+                        l10n.chatMsgDetails,
                         style: theme.textTheme.titleSmall?.copyWith(
                           fontWeight: FontWeight.bold,
                         ),
@@ -223,18 +230,25 @@ class _PrivateMessageBubble extends StatelessWidget {
                   const Divider(height: 20),
                   _DetailRow(
                     icon: Icons.access_time,
-                    label: 'Hora',
+                    label: l10n.commonTime,
                     value: timeStr,
                     theme: theme,
                   ),
                   if (hops != null)
                     _DetailRow(
                       icon: Icons.route,
-                      label: 'Caminho',
+                      label: l10n.commonPath,
                       value:
                           hops == 0
-                              ? 'Direto'
-                              : '$hops salto${hops > 1 ? 's' : ''}',
+                              ? l10n.commonDirect
+                              : '$hops ${hops == 1 ? l10n.commonSingularHop : l10n.commonPluralHops}',
+                      theme: theme,
+                    ),
+                  if (!msg.isOutgoing && incomingHashSize != null)
+                    _DetailRow(
+                      icon: Icons.pin,
+                      label: l10n.radioSettingsPathHashMode,
+                      value: '$incomingHashSize ${incomingHashSize == 1 ? 'byte' : 'bytes'}',
                       theme: theme,
                     ),
                   if (msg.snr != null)
@@ -247,8 +261,8 @@ class _PrivateMessageBubble extends StatelessWidget {
                   if (msg.isOutgoing && msg.sentRouteFlag != null)
                     _DetailRow(
                       icon: Icons.send,
-                      label: 'Enviado via',
-                      value: msg.sentRouteFlag == 0 ? 'Direto' : 'Flood',
+                      label: l10n.privateSentVia,
+                      value: msg.sentRouteFlag == 0 ? l10n.commonDirect : l10n.commonFlood,
                       theme: theme,
                     ),
                   if (msg.isOutgoing)
@@ -259,13 +273,13 @@ class _PrivateMessageBubble extends StatelessWidget {
                               : msg.confirmed
                               ? Icons.done_all
                               : Icons.done,
-                      label: 'Estado',
+                      label: l10n.commonStatus,
                       value:
                           msg.failed
-                              ? context.l10n.chatFailed
+                              ? l10n.chatFailed
                               : msg.confirmed
-                              ? 'Confirmado'
-                              : 'Pendente',
+                              ? l10n.privateConfirmed
+                              : l10n.privatePending,
                       theme: theme,
                     ),
                   const SizedBox(height: 8),

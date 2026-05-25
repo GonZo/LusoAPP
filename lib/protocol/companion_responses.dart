@@ -161,10 +161,27 @@ class BinaryResponsePush extends CompanionResponse {
 }
 
 class PathDiscoveryPush extends CompanionResponse {
-  const PathDiscoveryPush(this.pubKeyPrefix, this.outPath, this.inPath);
+  const PathDiscoveryPush(
+    this.pubKeyPrefix,
+    this.outPath,
+    this.outHashSize,
+    this.inPath,
+    this.inHashSize,
+  );
+
   final Uint8List pubKeyPrefix;
+
+  /// One element per hop; each value is the raw hash (1–3 bytes wide).
   final List<int> outPath;
+
+  /// Bytes per hop hash for the outbound path (1, 2, or 3).
+  final int outHashSize;
+
+  /// One element per hop; each value is the raw hash (1–3 bytes wide).
   final List<int> inPath;
+
+  /// Bytes per hop hash for the inbound path (1, 2, or 3).
+  final int inHashSize;
 }
 
 class ControlDataPush extends CompanionResponse {
