@@ -827,8 +827,18 @@ class ConnectionNotifier extends StateNotifier<TransportState> {
           _ref.read(deviceInfoProvider.notifier).state = info;
         case SendConfirmedPush():
           _ref.read(messagesProvider.notifier).confirmLastOutgoing();
-        case SentResponse(:final routeFlag):
-          _ref.read(messagesProvider.notifier).markLastOutgoingRoute(routeFlag);
+        case SentResponse(
+          :final routeFlag,
+          :final expectedAck,
+          :final suggestedTimeoutMs,
+        ):
+          _ref
+              .read(messagesProvider.notifier)
+              .markLastOutgoingRoute(
+                routeFlag,
+                expectedAck: expectedAck,
+                suggestedTimeoutMs: suggestedTimeoutMs,
+              );
         case ErrorResponse():
           _ref.read(networkStatsProvider.notifier).incrementError();
         case AdvertPush(

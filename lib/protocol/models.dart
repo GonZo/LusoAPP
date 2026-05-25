@@ -315,6 +315,8 @@ class ChatMessage extends Equatable {
     sentRouteFlag:
         json['sentRouteFlag'] as int? ??
         (json['sentViaFlood'] == true ? 1 : null),
+    expectedAck: json['expectedAck'] as int?,
+    suggestedTimeoutMs: json['suggestedTimeoutMs'] as int?,
     packetHashHex: json['packetHashHex'] as String?,
     failed: json['failed'] as bool? ?? false,
     retryCount: json['retryCount'] as int? ?? 0,
@@ -331,6 +333,8 @@ class ChatMessage extends Equatable {
     this.pathLen,
     this.heardCount = 0,
     this.sentRouteFlag,
+    this.expectedAck,
+    this.suggestedTimeoutMs,
     this.packetHashHex,
     this.isCliResponse = false,
     this.failed = false,
@@ -351,6 +355,12 @@ class ChatMessage extends Equatable {
 
   /// Route flag from RESP_CODE_SENT: null=unknown, 0=direct, 1=flood (via repeaters).
   final int? sentRouteFlag;
+
+  /// ACK CRC expected for this outgoing private message.
+  final int? expectedAck;
+
+  /// Firmware-suggested ACK timeout in milliseconds.
+  final int? suggestedTimeoutMs;
 
   /// 8-byte packet hash (hex) from 0x88 LogRxData frames.
   /// Used to track how many repeaters re-broadcast this message.
@@ -381,6 +391,8 @@ class ChatMessage extends Equatable {
     int? pathLen,
     int? heardCount,
     int? sentRouteFlag,
+    int? expectedAck,
+    int? suggestedTimeoutMs,
     String? packetHashHex,
     bool? isCliResponse,
     bool? failed,
@@ -398,6 +410,8 @@ class ChatMessage extends Equatable {
       pathLen: pathLen ?? this.pathLen,
       heardCount: heardCount ?? this.heardCount,
       sentRouteFlag: sentRouteFlag ?? this.sentRouteFlag,
+      expectedAck: expectedAck ?? this.expectedAck,
+      suggestedTimeoutMs: suggestedTimeoutMs ?? this.suggestedTimeoutMs,
       packetHashHex: packetHashHex ?? this.packetHashHex,
       isCliResponse: isCliResponse ?? this.isCliResponse,
       failed: failed ?? this.failed,
@@ -417,6 +431,8 @@ class ChatMessage extends Equatable {
     'pathLen': pathLen,
     'heardCount': heardCount,
     'sentRouteFlag': sentRouteFlag,
+    'expectedAck': expectedAck,
+    'suggestedTimeoutMs': suggestedTimeoutMs,
     'packetHashHex': packetHashHex,
     if (failed) 'failed': failed,
     if (retryCount > 0) 'retryCount': retryCount,
@@ -430,6 +446,8 @@ class ChatMessage extends Equatable {
     channelIndex,
     heardCount,
     sentRouteFlag,
+    expectedAck,
+    suggestedTimeoutMs,
     packetHashHex,
     failed,
     retryCount,

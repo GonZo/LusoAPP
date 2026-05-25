@@ -284,7 +284,13 @@ class CompanionDecoder {
   /// Parse RESP_CODE_SENT (0x06): route_flag, expected_ack, est_timeout
   static SentResponse _parseSentResponse(Uint8List data) {
     final routeFlag = data.isNotEmpty ? data[0] : 0;
-    return SentResponse(routeFlag: routeFlag);
+    final expectedAck = data.length >= 5 ? _readUint32LE(data, 1) : 0;
+    final suggestedTimeoutMs = data.length >= 9 ? _readUint32LE(data, 5) : 0;
+    return SentResponse(
+      routeFlag: routeFlag,
+      expectedAck: expectedAck,
+      suggestedTimeoutMs: suggestedTimeoutMs,
+    );
   }
 
   static PrivateMessageResponse _parsePrivateMessageV3(Uint8List data) {
@@ -605,13 +611,7 @@ class CompanionDecoder {
     final outHashSize = hashSizeOf(outPathLenByte);
 
     if (offset >= data.length) {
-      return PathDiscoveryPush(
-        pubKeyPrefix,
-        outPath,
-        outHashSize,
-        const [],
-        1,
-      );
+      return PathDiscoveryPush(pubKeyPrefix, outPath, outHashSize, const [], 1);
     }
 
     final inPathLenByte = data[offset++];

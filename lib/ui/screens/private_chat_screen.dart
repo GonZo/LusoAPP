@@ -101,21 +101,12 @@ class _PrivateChatScreenState extends ConsumerState<PrivateChatScreen> {
     _scrollToBottom();
   }
 
-  void _retryMessage(ChatMessage msg) {
-    final service = ref.read(radioServiceProvider);
-    if (service == null) return;
-    final updated = ref
+  /// Retries a failed message, automatically switching to flood routing by
+  /// delegating delivery policy to the notifier.
+  Future<void> _retryMessageAsync(ChatMessage msg) async {
+    await ref
         .read(messagesProvider.notifier)
-        .markMessageRetrying(msg);
-    if (updated == null) return;
-    final keyPrefix =
-        _contactKey.length >= 6 ? _contactKey.sublist(0, 6) : _contactKey;
-    service.sendPrivateMessage(
-      keyPrefix,
-      updated.text,
-      attempt: updated.retryCount,
-      timestamp: updated.timestamp,
-    );
+        .retryPrivateMessage(msg, forceFlood: true);
     _scrollToBottom();
   }
 
@@ -383,7 +374,9 @@ class _PrivateChatScreenState extends ConsumerState<PrivateChatScreen> {
                                   ? null
                                   : () => setState(() => _replyingTo = msg),
                           onRetry:
-                              msg.isOutgoing ? () => _retryMessage(msg) : null,
+                              msg.isOutgoing
+                                  ? () => _retryMessageAsync(msg)
+                                  : null,
                         );
                       },
                     ),
@@ -487,7 +480,9 @@ class _PrivateChatScreenState extends ConsumerState<PrivateChatScreen> {
           .whenComplete(sub.cancel);
 
       if (outPath != null && outPath.isNotEmpty) {
-        pathBytes = _outPathToBytes(outPath); // NOTE: re-encoding fixed in Commit 3
+        pathBytes = _outPathToBytes(
+          outPath,
+        ); // NOTE: re-encoding fixed in Commit 3
       }
     }
 

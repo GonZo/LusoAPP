@@ -38,11 +38,23 @@ class SelfInfoResponse extends CompanionResponse {
 }
 
 class SentResponse extends CompanionResponse {
-  const SentResponse({this.routeFlag = 0});
+  const SentResponse({
+    this.routeFlag = 0,
+    this.expectedAck = 0,
+    this.suggestedTimeoutMs = 0,
+  });
 
   /// 0 = direct, 1 = flood (via repeaters)
   final int routeFlag;
+
+  /// Expected ACK CRC for this send, or 0 when no ACK is expected.
+  final int expectedAck;
+
+  /// Firmware-estimated ACK timeout in milliseconds.
+  final int suggestedTimeoutMs;
+
   bool get isFlood => routeFlag == 1;
+  bool get expectsAck => expectedAck != 0;
 }
 
 class PrivateMessageResponse extends CompanionResponse {
