@@ -701,6 +701,20 @@ class AppLocalizationsPt extends AppLocalizations {
   String get settingsSosUnnamedChannel => '(sem nome)';
 
   @override
+  String get settingsSosHoldDuration => 'Segurar para enviar (segundos)';
+
+  @override
+  String get settingsSosHoldDurationDesc =>
+      'Mantém o botão SOS pressionado este tempo antes de enviar. Evita envios acidentais.';
+
+  @override
+  String get settingsSosHoldToSend => 'Segura para enviar SOS';
+
+  @override
+  String get cannedMessagesSosHint =>
+      'Segura o chip SOS para enviar com as configurações definidas';
+
+  @override
   String get settingsPrivateKeyCopy => 'Cópia da Chave Privada';
 
   @override

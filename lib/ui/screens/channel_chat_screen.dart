@@ -93,8 +93,13 @@ class _ChannelChatScreenState extends ConsumerState<ChannelChatScreen> {
     _atBottom = true;
     _firstUnreadIndex = -1;
 
-    // Re-register as the new active channel.
-    ref.read(activeChannelIndexProvider.notifier).state = widget.channelIndex;
+    // Re-register as the new active channel after this frame to avoid
+    // provider writes inside lifecycle methods.
+    final container = ProviderScope.containerOf(context, listen: false);
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      container.read(activeChannelIndexProvider.notifier).state =
+          widget.channelIndex;
+    });
 
     WidgetsBinding.instance.addPostFrameCallback((_) async {
       if (!mounted) return;
@@ -137,12 +142,20 @@ class _ChannelChatScreenState extends ConsumerState<ChannelChatScreen> {
   }
 
   @override
+  void deactivate() {
+    // Clear active-channel registration after this frame to avoid provider
+    // writes while the widget tree is still building/deactivating.
+    final container = ProviderScope.containerOf(context, listen: false);
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      container.read(activeChannelIndexProvider.notifier).state = -1;
+    });
+    super.deactivate();
+  }
+
+  @override
   void dispose() {
     _textController.dispose();
     _scrollController.dispose();
-    // Clear active-channel registration so notifications resume for this
-    // channel once the user navigates away.
-    ref.read(activeChannelIndexProvider.notifier).state = -1;
     super.dispose();
   }
 

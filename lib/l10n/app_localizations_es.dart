@@ -703,6 +703,20 @@ class AppLocalizationsEs extends AppLocalizations {
   String get settingsSosUnnamedChannel => '(sin nombre)';
 
   @override
+  String get settingsSosHoldDuration => 'Mantener para enviar (segundos)';
+
+  @override
+  String get settingsSosHoldDurationDesc =>
+      'Mantén el botón SOS pulsado este tiempo antes de enviar. Evita envíos accidentales.';
+
+  @override
+  String get settingsSosHoldToSend => 'Mantén para enviar SOS';
+
+  @override
+  String get cannedMessagesSosHint =>
+      'Mantén el chip SOS para enviar con la configuración definida';
+
+  @override
   String get settingsPrivateKeyCopy => 'Copia de clave privada';
 
   @override

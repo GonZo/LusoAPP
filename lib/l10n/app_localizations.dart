@@ -1390,6 +1390,30 @@ abstract class AppLocalizations {
   /// **'(sem nome)'**
   String get settingsSosUnnamedChannel;
 
+  /// No description provided for @settingsSosHoldDuration.
+  ///
+  /// In pt, this message translates to:
+  /// **'Segurar para enviar (segundos)'**
+  String get settingsSosHoldDuration;
+
+  /// No description provided for @settingsSosHoldDurationDesc.
+  ///
+  /// In pt, this message translates to:
+  /// **'Mantém o botão SOS pressionado este tempo antes de enviar. Evita envios acidentais.'**
+  String get settingsSosHoldDurationDesc;
+
+  /// No description provided for @settingsSosHoldToSend.
+  ///
+  /// In pt, this message translates to:
+  /// **'Segura para enviar SOS'**
+  String get settingsSosHoldToSend;
+
+  /// No description provided for @cannedMessagesSosHint.
+  ///
+  /// In pt, this message translates to:
+  /// **'Segura o chip SOS para enviar com as configurações definidas'**
+  String get cannedMessagesSosHint;
+
   /// No description provided for @settingsPrivateKeyCopy.
   ///
   /// In pt, this message translates to:
