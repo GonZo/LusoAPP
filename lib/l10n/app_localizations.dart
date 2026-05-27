@@ -1414,6 +1414,132 @@ abstract class AppLocalizations {
   /// **'Segura o chip SOS para enviar com as configurações definidas'**
   String get cannedMessagesSosHint;
 
+  /// No description provided for @settingsPruneTitle.
+  ///
+  /// In pt, this message translates to:
+  /// **'Limpeza de Contactos'**
+  String get settingsPruneTitle;
+
+  /// No description provided for @settingsPruneDesc.
+  ///
+  /// In pt, this message translates to:
+  /// **'Remove contactos inativos da memória da rádio'**
+  String get settingsPruneDesc;
+
+  /// No description provided for @settingsPruneDaysLabel.
+  ///
+  /// In pt, this message translates to:
+  /// **'Dias de Inatividade'**
+  String get settingsPruneDaysLabel;
+
+  /// No description provided for @settingsPruneDaysDesc.
+  ///
+  /// In pt, this message translates to:
+  /// **'Contactos sem contacto > X dias serão removidos'**
+  String get settingsPruneDaysDesc;
+
+  /// No description provided for @settingsPruneDaysUnit.
+  ///
+  /// In pt, this message translates to:
+  /// **'dias'**
+  String get settingsPruneDaysUnit;
+
+  /// No description provided for @settingsPruneTypesTitle.
+  ///
+  /// In pt, this message translates to:
+  /// **'Tipos de Contacto a Remover'**
+  String get settingsPruneTypesTitle;
+
+  /// No description provided for @settingsPruneChatsTitle.
+  ///
+  /// In pt, this message translates to:
+  /// **'Chats / Pessoais'**
+  String get settingsPruneChatsTitle;
+
+  /// No description provided for @settingsPruneChatsDesc.
+  ///
+  /// In pt, this message translates to:
+  /// **'Remover contactos de chat (0x01)'**
+  String get settingsPruneChatsDesc;
+
+  /// No description provided for @settingsPruneRepeatersTitle.
+  ///
+  /// In pt, this message translates to:
+  /// **'Repetidores'**
+  String get settingsPruneRepeatersTitle;
+
+  /// No description provided for @settingsPruneRepeatersDesc.
+  ///
+  /// In pt, this message translates to:
+  /// **'Remover contactos de repetidor (0x02)'**
+  String get settingsPruneRepeatersDesc;
+
+  /// No description provided for @settingsPruneRoomsTitle.
+  ///
+  /// In pt, this message translates to:
+  /// **'Salas'**
+  String get settingsPruneRoomsTitle;
+
+  /// No description provided for @settingsPruneRoomsDesc.
+  ///
+  /// In pt, this message translates to:
+  /// **'Remover contactos de sala (0x03)'**
+  String get settingsPruneRoomsDesc;
+
+  /// No description provided for @settingsPruneSensorsTitle.
+  ///
+  /// In pt, this message translates to:
+  /// **'Sensores'**
+  String get settingsPruneSensorsTitle;
+
+  /// No description provided for @settingsPruneSensorsDesc.
+  ///
+  /// In pt, this message translates to:
+  /// **'Remover contactos de sensor (0x04)'**
+  String get settingsPruneSensorsDesc;
+
+  /// No description provided for @settingsPruneRestoreDefaults.
+  ///
+  /// In pt, this message translates to:
+  /// **'Restaurar Padrão'**
+  String get settingsPruneRestoreDefaults;
+
+  /// No description provided for @settingsPublicKeyCopied.
+  ///
+  /// In pt, this message translates to:
+  /// **'Chave pública copiada'**
+  String get settingsPublicKeyCopied;
+
+  /// No description provided for @settingsShutdownUnavailable.
+  ///
+  /// In pt, this message translates to:
+  /// **'Shutdown não disponível neste firmware'**
+  String get settingsShutdownUnavailable;
+
+  /// No description provided for @settingsOwnQrCodeTitle.
+  ///
+  /// In pt, this message translates to:
+  /// **'O meu QR Code'**
+  String get settingsOwnQrCodeTitle;
+
+  /// No description provided for @settingsEditNameTitle.
+  ///
+  /// In pt, this message translates to:
+  /// **'Alterar Nome'**
+  String get settingsEditNameTitle;
+
+  /// No description provided for @settingsNodeNameLabel.
+  ///
+  /// In pt, this message translates to:
+  /// **'Nome do nó'**
+  String get settingsNodeNameLabel;
+
+  /// No description provided for @settingsNodeNameHint.
+  ///
+  /// In pt, this message translates to:
+  /// **'Ex: CT1XXX-MC'**
+  String get settingsNodeNameHint;
+
   /// No description provided for @settingsPrivateKeyCopy.
   ///
   /// In pt, this message translates to:

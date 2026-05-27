@@ -55,7 +55,7 @@ class _PruneConfigCardState extends ConsumerState<_PruneConfigCard> {
                 Icon(Icons.delete_sweep, color: theme.colorScheme.primary),
                 const SizedBox(width: 8),
                 Text(
-                  'Limpeza de Contactos',
+                  context.l10n.settingsPruneTitle,
                   style: theme.textTheme.titleMedium?.copyWith(
                     fontWeight: FontWeight.bold,
                   ),
@@ -64,7 +64,7 @@ class _PruneConfigCardState extends ConsumerState<_PruneConfigCard> {
             ),
             const SizedBox(height: 4),
             Text(
-              'Remove contactos inativos da memória da rádio',
+              context.l10n.settingsPruneDesc,
               style: theme.textTheme.bodySmall?.copyWith(
                 color: theme.colorScheme.outline,
               ),
@@ -81,14 +81,14 @@ class _PruneConfigCardState extends ConsumerState<_PruneConfigCard> {
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
                         Text(
-                          'Dias de Inatividade',
+                          context.l10n.settingsPruneDaysLabel,
                           style: theme.textTheme.bodyMedium?.copyWith(
                             fontWeight: FontWeight.w500,
                           ),
                         ),
                         const SizedBox(height: 4),
                         Text(
-                          'Contactos sem contacto > X dias serão removidos',
+                          context.l10n.settingsPruneDaysDesc,
                           style: theme.textTheme.bodySmall?.copyWith(
                             color: theme.colorScheme.outline,
                           ),
@@ -111,7 +111,7 @@ class _PruneConfigCardState extends ConsumerState<_PruneConfigCard> {
                           horizontal: 8,
                           vertical: 12,
                         ),
-                        suffixText: 'dias',
+                        suffixText: context.l10n.settingsPruneDaysUnit,
                       ),
                       onChanged: _updateDaysThreshold,
                     ),
@@ -123,7 +123,7 @@ class _PruneConfigCardState extends ConsumerState<_PruneConfigCard> {
 
             // Contact type toggles
             Text(
-              'Tipos de Contacto a Remover',
+              context.l10n.settingsPruneTypesTitle,
               style: theme.textTheme.bodyMedium?.copyWith(
                 fontWeight: FontWeight.w500,
               ),
@@ -133,9 +133,9 @@ class _PruneConfigCardState extends ConsumerState<_PruneConfigCard> {
             // Chat toggle
             SwitchListTile(
               contentPadding: EdgeInsets.zero,
-              title: const Text('Chats / Pessoais'),
+              title: Text(context.l10n.settingsPruneChatsTitle),
               subtitle: Text(
-                'Remover contactos de chat (0x01)',
+                context.l10n.settingsPruneChatsDesc,
                 style: theme.textTheme.bodySmall?.copyWith(
                   color: theme.colorScheme.outline,
                 ),
@@ -147,9 +147,9 @@ class _PruneConfigCardState extends ConsumerState<_PruneConfigCard> {
             // Repeater toggle
             SwitchListTile(
               contentPadding: EdgeInsets.zero,
-              title: const Text('Repetidores'),
+              title: Text(context.l10n.settingsPruneRepeatersTitle),
               subtitle: Text(
-                'Remover contactos de repetidor (0x02)',
+                context.l10n.settingsPruneRepeatersDesc,
                 style: theme.textTheme.bodySmall?.copyWith(
                   color: theme.colorScheme.outline,
                 ),
@@ -161,9 +161,9 @@ class _PruneConfigCardState extends ConsumerState<_PruneConfigCard> {
             // Room toggle
             SwitchListTile(
               contentPadding: EdgeInsets.zero,
-              title: const Text('Salas'),
+              title: Text(context.l10n.settingsPruneRoomsTitle),
               subtitle: Text(
-                'Remover contactos de sala (0x03)',
+                context.l10n.settingsPruneRoomsDesc,
                 style: theme.textTheme.bodySmall?.copyWith(
                   color: theme.colorScheme.outline,
                 ),
@@ -175,9 +175,9 @@ class _PruneConfigCardState extends ConsumerState<_PruneConfigCard> {
             // Sensor toggle
             SwitchListTile(
               contentPadding: EdgeInsets.zero,
-              title: const Text('Sensores'),
+              title: Text(context.l10n.settingsPruneSensorsTitle),
               subtitle: Text(
-                'Remover contactos de sensor (0x04)',
+                context.l10n.settingsPruneSensorsDesc,
                 style: theme.textTheme.bodySmall?.copyWith(
                   color: theme.colorScheme.outline,
                 ),
@@ -192,7 +192,7 @@ class _PruneConfigCardState extends ConsumerState<_PruneConfigCard> {
             Align(
               child: TextButton.icon(
                 icon: const Icon(Icons.restart_alt),
-                label: const Text('Restaurar Padrão'),
+                label: Text(context.l10n.settingsPruneRestoreDefaults),
                 onPressed: () => notifier.reset(),
               ),
             ),

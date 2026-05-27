@@ -147,9 +147,11 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
                                   .join();
                           Clipboard.setData(ClipboardData(text: hex));
                           ScaffoldMessenger.of(context).showSnackBar(
-                            const SnackBar(
-                              content: Text('Chave pública copiada'),
-                              duration: Duration(seconds: 2),
+                            SnackBar(
+                              content: Text(
+                                context.l10n.settingsPublicKeyCopied,
+                              ),
+                              duration: const Duration(seconds: 2),
                             ),
                           );
                         },
@@ -238,9 +240,9 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
                           child: OutlinedButton.icon(
                             onPressed: () {
                               ScaffoldMessenger.of(context).showSnackBar(
-                                const SnackBar(
+                                SnackBar(
                                   content: Text(
-                                    'Shutdown não disponível neste firmware',
+                                    context.l10n.settingsShutdownUnavailable,
                                   ),
                                 ),
                               );
@@ -302,10 +304,10 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
                     ],
                   ),
                   const SizedBox(height: 12),
-                  const ListTile(
-                    title: Text('LusoAPP'),
+                  ListTile(
+                    title: Text(context.l10n.settingsAppName),
                     subtitle: Text(
-                      'MeshCore Portugal\nCódigo fonte inicial criado por\nPaulo Pereira aka GZ7d0',
+                      '${context.l10n.settingsAppSubtitle}\n${context.l10n.settingsCredit}',
                     ),
                   ),
                   ListTile(
@@ -342,9 +344,9 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
   Future<void> _confirmAndReboot(BuildContext context) async {
     final service = ref.read(radioServiceProvider);
     if (service == null) {
-      ScaffoldMessenger.of(
-        context,
-      ).showSnackBar(const SnackBar(content: Text('Rádio não ligado')));
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text(context.l10n.commonRadioDisconnected)),
+      );
       return;
     }
 
@@ -393,7 +395,7 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
       context: context,
       builder:
           (ctx) => AlertDialog(
-            title: const Text('O meu QR Code'),
+            title: Text(context.l10n.settingsOwnQrCodeTitle),
             content: SizedBox(
               width: 260,
               child: Column(
@@ -411,7 +413,7 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
                   ),
                   const SizedBox(height: 4),
                   Text(
-                    'Tipo: Companheiro',
+                    context.l10n.contactsTypeCompanion,
                     style: Theme.of(ctx).textTheme.bodySmall,
                   ),
                 ],
@@ -436,12 +438,12 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
       context: context,
       builder:
           (ctx) => AlertDialog(
-            title: const Text('Alterar Nome'),
+            title: Text(context.l10n.settingsEditNameTitle),
             content: TextField(
               controller: controller,
-              decoration: const InputDecoration(
-                labelText: 'Nome do no',
-                hintText: 'Ex: CT1XXX-MC',
+              decoration: InputDecoration(
+                labelText: context.l10n.settingsNodeNameLabel,
+                hintText: context.l10n.settingsNodeNameHint,
               ),
               maxLength: 32,
             ),

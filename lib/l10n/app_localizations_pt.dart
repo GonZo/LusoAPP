@@ -715,6 +715,73 @@ class AppLocalizationsPt extends AppLocalizations {
       'Segura o chip SOS para enviar com as configurações definidas';
 
   @override
+  String get settingsPruneTitle => 'Limpeza de Contactos';
+
+  @override
+  String get settingsPruneDesc =>
+      'Remove contactos inativos da memória da rádio';
+
+  @override
+  String get settingsPruneDaysLabel => 'Dias de Inatividade';
+
+  @override
+  String get settingsPruneDaysDesc =>
+      'Contactos sem contacto > X dias serão removidos';
+
+  @override
+  String get settingsPruneDaysUnit => 'dias';
+
+  @override
+  String get settingsPruneTypesTitle => 'Tipos de Contacto a Remover';
+
+  @override
+  String get settingsPruneChatsTitle => 'Chats / Pessoais';
+
+  @override
+  String get settingsPruneChatsDesc => 'Remover contactos de chat (0x01)';
+
+  @override
+  String get settingsPruneRepeatersTitle => 'Repetidores';
+
+  @override
+  String get settingsPruneRepeatersDesc =>
+      'Remover contactos de repetidor (0x02)';
+
+  @override
+  String get settingsPruneRoomsTitle => 'Salas';
+
+  @override
+  String get settingsPruneRoomsDesc => 'Remover contactos de sala (0x03)';
+
+  @override
+  String get settingsPruneSensorsTitle => 'Sensores';
+
+  @override
+  String get settingsPruneSensorsDesc => 'Remover contactos de sensor (0x04)';
+
+  @override
+  String get settingsPruneRestoreDefaults => 'Restaurar Padrão';
+
+  @override
+  String get settingsPublicKeyCopied => 'Chave pública copiada';
+
+  @override
+  String get settingsShutdownUnavailable =>
+      'Shutdown não disponível neste firmware';
+
+  @override
+  String get settingsOwnQrCodeTitle => 'O meu QR Code';
+
+  @override
+  String get settingsEditNameTitle => 'Alterar Nome';
+
+  @override
+  String get settingsNodeNameLabel => 'Nome do nó';
+
+  @override
+  String get settingsNodeNameHint => 'Ex: CT1XXX-MC';
+
+  @override
   String get settingsPrivateKeyCopy => 'Cópia da Chave Privada';
 
   @override
