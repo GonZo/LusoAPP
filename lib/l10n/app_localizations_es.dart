@@ -1361,13 +1361,22 @@ class AppLocalizationsEs extends AppLocalizations {
   String get chatYourRadio => 'Tu radio';
 
   @override
+  String get chatLastRepeater => 'Último repetidor';
+
+  @override
   String get chatYouSent => 'Enviaste el mensaje';
+
+  @override
+  String get chatSentMessage => 'Envió el mensaje';
 
   @override
   String get chatReceived => 'Recibió el mensaje';
 
   @override
   String get chatHopLabel => 'Salto';
+
+  @override
+  String get chatHopOrderFarthest => 'más lejano';
 
   @override
   String get chatRepeated => 'Repitió';

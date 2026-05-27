@@ -65,7 +65,10 @@ class _ConnectingCard extends StatelessWidget {
                 const SizedBox(width: 12),
                 Flexible(
                   child: Text(
-                    target?.device.name ?? 'A ligar...',
+                    _safeUiName(
+                      target?.device.name,
+                      fallback: target?.device.id ?? 'A ligar...',
+                    ),
                     style: theme.textTheme.titleMedium?.copyWith(
                       fontWeight: FontWeight.bold,
                     ),

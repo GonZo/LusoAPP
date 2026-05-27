@@ -12,6 +12,41 @@ import '../../transport/radio_transport.dart';
 import '../../utils/battery_utils.dart';
 import '../theme.dart';
 
+String _sanitizeUtf16Ui(String s) {
+  for (var i = 0; i < s.length; i++) {
+    final c = s.codeUnitAt(i);
+    if (c >= 0xD800 && c <= 0xDFFF) {
+      final buf = StringBuffer();
+      for (var j = 0; j < s.length; j++) {
+        final u = s.codeUnitAt(j);
+        if (u >= 0xD800 && u <= 0xDBFF) {
+          if (j + 1 < s.length) {
+            final u2 = s.codeUnitAt(j + 1);
+            if (u2 >= 0xDC00 && u2 <= 0xDFFF) {
+              buf.write(s[j]);
+              buf.write(s[j + 1]);
+              j++;
+              continue;
+            }
+          }
+          buf.writeCharCode(0xFFFD);
+        } else if (u >= 0xDC00 && u <= 0xDFFF) {
+          buf.writeCharCode(0xFFFD);
+        } else {
+          buf.write(s[j]);
+        }
+      }
+      return buf.toString();
+    }
+  }
+  return s;
+}
+
+String _safeUiText(String? value, {required String fallback}) {
+  final sanitized = _sanitizeUtf16Ui(value ?? '').trim();
+  return sanitized.isEmpty ? fallback : sanitized;
+}
+
 /// Main shell screen with bottom navigation.
 class HomeScreen extends ConsumerStatefulWidget {
   const HomeScreen({
@@ -143,7 +178,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                         size: 24,
                       ),
                       const SizedBox(width: 8),
-                      Text(selfName ?? 'LusoAPP'),
+                      Text(_safeUiText(selfName, fallback: 'LusoAPP')),
                     ],
                   ),
           actions: [

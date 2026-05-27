@@ -78,6 +78,17 @@ class Plan333Config {
 // ---------------------------------------------------------------------------
 
 class Plan333AutoSendState {
+  factory Plan333AutoSendState.fromJson(Map<String, dynamic> json) {
+    final rawCount = (json['cq_sent_count'] as int?) ?? 0;
+    final epoch = json['last_cq_epoch_ms'] as int?;
+    return Plan333AutoSendState(
+      cqSentCount: rawCount.clamp(0, 3),
+      lastCqTime:
+          epoch == null ? null : DateTime.fromMillisecondsSinceEpoch(epoch),
+      aborted: (json['aborted'] as bool?) ?? false,
+    );
+  }
+
   const Plan333AutoSendState({
     this.cqSentCount = 0,
     this.lastCqTime,
@@ -103,6 +114,12 @@ class Plan333AutoSendState {
     lastCqTime: lastCqTime ?? this.lastCqTime,
     aborted: aborted ?? this.aborted,
   );
+
+  Map<String, dynamic> toJson() => {
+    'cq_sent_count': cqSentCount,
+    'last_cq_epoch_ms': lastCqTime?.millisecondsSinceEpoch,
+    'aborted': aborted,
+  };
 }
 
 // ---------------------------------------------------------------------------
@@ -582,12 +599,47 @@ final plan333AutoSendProvider =
 
 class Plan333AutoSendNotifier extends StateNotifier<Plan333AutoSendState> {
   Plan333AutoSendNotifier(this._ref) : super(const Plan333AutoSendState()) {
-    // Poll every 30 s — lightweight, auto-send fires only once per slot.
-    _pollTimer = Timer.periodic(const Duration(seconds: 30), (_) => _tick());
+    unawaited(_init());
   }
 
   final Ref _ref;
   Timer? _pollTimer;
+
+  Future<void> _init() async {
+    await _restoreFromStorage();
+    _tick();
+    // Poll every 30 s — lightweight, auto-send fires only once per slot.
+    _pollTimer = Timer.periodic(const Duration(seconds: 30), (_) => _tick());
+  }
+
+  Future<void> _restoreFromStorage() async {
+    final raw = await StorageService.instance.loadPlan333AutoSendState();
+    if (raw == null) return;
+    try {
+      final restored = Plan333AutoSendState.fromJson(
+        jsonDecode(raw) as Map<String, dynamic>,
+      );
+
+      final now = DateTime.now();
+      if (Plan333Service.isMeshEventActive(now)) {
+        state = restored;
+      } else {
+        // Drop stale state from older event sessions.
+        await _persistState(const Plan333AutoSendState());
+      }
+    } catch (_) {}
+  }
+
+  Future<void> _persistState(Plan333AutoSendState next) async {
+    await StorageService.instance.savePlan333AutoSendState(
+      jsonEncode(next.toJson()),
+    );
+  }
+
+  void _setState(Plan333AutoSendState next) {
+    state = next;
+    unawaited(_persistState(next));
+  }
 
   void _tick() {
     unawaited(
@@ -606,8 +658,8 @@ class Plan333AutoSendNotifier extends StateNotifier<Plan333AutoSendState> {
     // Reset session state when the Mesh event window closes.
     if (!allowOutsideEvent &&
         !Plan333Service.isMeshEventActive(now) &&
-        state.cqSentCount > 0) {
-      state = const Plan333AutoSendState();
+        (state.cqSentCount > 0 || state.aborted || state.lastCqTime != null)) {
+      _setState(const Plan333AutoSendState());
       return;
     }
 
@@ -643,12 +695,12 @@ class Plan333AutoSendNotifier extends StateNotifier<Plan333AutoSendState> {
   /// The aborted flag is cleared automatically when the event window closes
   /// (next [_tick] after 22:00 on Saturday) or via [debugResetAutomationState].
   void abortSession() {
-    state = state.copyWith(aborted: true);
+    _setState(state.copyWith(aborted: true));
   }
 
   /// Debug helper: clear CQ session counters immediately.
   void debugResetAutomationState() {
-    state = const Plan333AutoSendState();
+    _setState(const Plan333AutoSendState());
   }
 
   /// Manually send one CQ (ignores auto-send flag, respects 3-message limit).
@@ -696,9 +748,11 @@ class Plan333AutoSendNotifier extends StateNotifier<Plan333AutoSendState> {
         );
     service.sendChannelMessage(channelIndex, msg, timestamp: ts);
 
-    state = state.copyWith(
-      cqSentCount: state.cqSentCount + 1,
-      lastCqTime: DateTime.now(),
+    _setState(
+      state.copyWith(
+        cqSentCount: state.cqSentCount + 1,
+        lastCqTime: DateTime.now(),
+      ),
     );
   }
 

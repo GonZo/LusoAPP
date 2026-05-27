@@ -1348,13 +1348,22 @@ class AppLocalizationsEn extends AppLocalizations {
   String get chatYourRadio => 'Your radio';
 
   @override
+  String get chatLastRepeater => 'Last repeater';
+
+  @override
   String get chatYouSent => 'You sent the message';
+
+  @override
+  String get chatSentMessage => 'Sent the message';
 
   @override
   String get chatReceived => 'Received the message';
 
   @override
   String get chatHopLabel => 'Hop';
+
+  @override
+  String get chatHopOrderFarthest => 'farthest';
 
   @override
   String get chatRepeated => 'Repeated';

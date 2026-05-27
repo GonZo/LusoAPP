@@ -1,5 +1,40 @@
 part of '../radio_providers.dart';
 
+String _sanitizeUtf16Ui(String s) {
+  for (var i = 0; i < s.length; i++) {
+    final c = s.codeUnitAt(i);
+    if (c >= 0xD800 && c <= 0xDFFF) {
+      final buf = StringBuffer();
+      for (var j = 0; j < s.length; j++) {
+        final u = s.codeUnitAt(j);
+        if (u >= 0xD800 && u <= 0xDBFF) {
+          if (j + 1 < s.length) {
+            final u2 = s.codeUnitAt(j + 1);
+            if (u2 >= 0xDC00 && u2 <= 0xDFFF) {
+              buf.write(s[j]);
+              buf.write(s[j + 1]);
+              j++;
+              continue;
+            }
+          }
+          buf.writeCharCode(0xFFFD);
+        } else if (u >= 0xDC00 && u <= 0xDFFF) {
+          buf.writeCharCode(0xFFFD);
+        } else {
+          buf.write(s[j]);
+        }
+      }
+      return buf.toString();
+    }
+  }
+  return s;
+}
+
+String _safeUiName(String? value, {required String fallback}) {
+  final sanitized = _sanitizeUtf16Ui(value ?? '').trim();
+  return sanitized.isEmpty ? fallback : sanitized;
+}
+
 // ---------------------------------------------------------------------------
 // Connection manager
 // ---------------------------------------------------------------------------
@@ -82,10 +117,10 @@ class ConnectionNotifier extends StateNotifier<TransportState> {
         state = TransportState.connected;
         // Start foreground service to prevent Doze mode from killing the connection
         final radioNodeName = _ref.read(selfInfoProvider)?.name;
-        final displayName =
-            (radioNodeName != null && radioNodeName.isNotEmpty)
-                ? radioNodeName
-                : deviceName;
+        final displayName = _safeUiName(
+          radioNodeName,
+          fallback: _safeUiName(deviceName, fallback: deviceId),
+        );
         await NotificationService.instance.startRadioForeground(displayName);
         // Prefer the radio's configured node name; fall back to the BLE
         // advertisement name so the reconnect button always shows something.
@@ -167,10 +202,10 @@ class ConnectionNotifier extends StateNotifier<TransportState> {
         state = TransportState.connected;
         // Start foreground service to prevent Doze mode from killing the connection
         final radioNodeName = _ref.read(selfInfoProvider)?.name;
-        final displayName =
-            (radioNodeName != null && radioNodeName.isNotEmpty)
-                ? radioNodeName
-                : deviceName;
+        final displayName = _safeUiName(
+          radioNodeName,
+          fallback: _safeUiName(deviceName, fallback: deviceId),
+        );
         await NotificationService.instance.startRadioForeground(displayName);
         final typeStr =
             mode == ConnectionMode.kiss ? 'serialKiss' : 'serialCompanion';
@@ -290,10 +325,10 @@ class ConnectionNotifier extends StateNotifier<TransportState> {
 
         // Start foreground service to prevent Doze mode from killing the connection
         final radioNodeName = _ref.read(selfInfoProvider)?.name;
-        final displayName =
-            (radioNodeName != null && radioNodeName.isNotEmpty)
-                ? radioNodeName
-                : deviceName;
+        final displayName = _safeUiName(
+          radioNodeName,
+          fallback: _safeUiName(deviceName, fallback: deviceId),
+        );
         await NotificationService.instance.startRadioForeground(displayName);
 
         // Type strings distinguish Web Serial from native serial in the recent
@@ -401,7 +436,7 @@ class ConnectionNotifier extends StateNotifier<TransportState> {
     final batteryPct = batteryPercentFromMv(batteryMv);
 
     WidgetService.update(
-      radioName: selfInfo?.name ?? '—',
+      radioName: _safeUiName(selfInfo?.name, fallback: '—'),
       connected: state == TransportState.connected,
       batteryPct: batteryPct,
       contactCount: contacts.length,
@@ -799,19 +834,22 @@ class ConnectionNotifier extends StateNotifier<TransportState> {
             }
           }
         case SelfInfoResponse(:final info):
-          _ref.read(selfInfoProvider.notifier).state = info;
-          _ref.read(radioConfigProvider.notifier).state = info.radioConfig;
+          final safeName = _safeUiName(info.name, fallback: 'Rádio');
+          final safeInfo =
+              safeName == info.name ? info : info.copyWith(name: safeName);
+          _ref.read(selfInfoProvider.notifier).state = safeInfo;
+          _ref.read(radioConfigProvider.notifier).state = safeInfo.radioConfig;
           _pushWidget();
           // Keep the reconnect-button name in sync with the radio's node
           // name. This fires both at initial connect and whenever the user
           // renames the radio while connected.
-          if (info.name.isNotEmpty && state == TransportState.connected) {
+          if (safeInfo.name.isNotEmpty && state == TransportState.connected) {
             final last = _ref.read(lastDeviceProvider);
-            if (last != null && last.name != info.name) {
+            if (last != null && last.name != safeInfo.name) {
               final updated = LastDevice(
                 id: last.id,
                 type: last.type,
-                name: info.name,
+                name: safeInfo.name,
               );
               _ref.read(lastDeviceProvider.notifier).state = updated;
               // Also update the name in the recent devices list.
@@ -823,7 +861,7 @@ class ConnectionNotifier extends StateNotifier<TransportState> {
                 StorageService.instance.upsertRecentDevice(
                   id: last.id,
                   type: last.type,
-                  name: info.name,
+                  name: safeInfo.name,
                 ),
               );
             }

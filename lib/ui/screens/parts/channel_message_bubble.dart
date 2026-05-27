@@ -77,23 +77,25 @@ class _MessageBubble extends ConsumerWidget {
     if (n == 0) return null;
     final lastOff = (n - 1) * path.pathHashSize;
     if (lastOff + path.pathHashSize > path.pathBytes.length) {
-      // Fallback: hex of first byte at offset
-      return lastOff < path.pathBytes.length
-          ? path.pathBytes[lastOff]
-              .toRadixString(16)
-              .padLeft(2, '0')
-              .toUpperCase()
-          : '?';
+      // Fallback: hex of remaining bytes at offset.
+      if (lastOff >= path.pathBytes.length) return '?';
+      final end = path.pathBytes.length;
+      return path.pathBytes
+          .sublist(lastOff, end)
+          .map((b) => b.toRadixString(16).padLeft(2, '0'))
+          .join()
+          .toUpperCase();
     }
     final name = _resolveHopName(
       path.pathBytes.sublist(lastOff, lastOff + path.pathHashSize),
       contacts,
     );
     if (name != null) return name;
-    // Fallback: hex prefix
-    return path.pathBytes[lastOff]
-        .toRadixString(16)
-        .padLeft(2, '0')
+    // Fallback: full hash prefix for the configured hash size.
+    return path.pathBytes
+        .sublist(lastOff, lastOff + path.pathHashSize)
+        .map((b) => b.toRadixString(16).padLeft(2, '0'))
+        .join()
         .toUpperCase();
   }
 
@@ -126,6 +128,8 @@ class _MessageBubble extends ConsumerWidget {
     required List<Contact> contacts,
     VoidCallback? onTap,
   }) {
+    final l10n = context.l10n;
+
     // ── OUTGOING: no paths, just heard count ────────────────────────────────
     if (isOutgoing && paths.isEmpty) {
       if (heardCount == 0) return const SizedBox.shrink();
@@ -153,7 +157,7 @@ class _MessageBubble extends ConsumerWidget {
           Icon(Icons.subdirectory_arrow_right, size: 12, color: subtleColor),
           const SizedBox(width: 3),
           Text(
-            '$hops salto${hops == 1 ? '' : 's'}',
+            '$hops ${hops == 1 ? l10n.commonSingularHop : l10n.commonPluralHops}',
             style: TextStyle(fontSize: 11, color: subtleColor),
           ),
         ],
@@ -193,6 +197,7 @@ class _MessageBubble extends ConsumerWidget {
           children: [
             Icon(Icons.router, size: 11, color: subtleColor),
             const SizedBox(width: 4),
+            Text('${l10n.chatLastRepeater}: ', style: labelStyle),
             if (lastName != null)
               Flexible(
                 child: Text(
@@ -383,15 +388,18 @@ class _MessageBubble extends ConsumerWidget {
     );
   }
 
-  static String _metaSuffix(ChatMessage msg) {
+  static String _metaSuffix(BuildContext context, ChatMessage msg) {
+    final l10n = context.l10n;
     final parts = <String>[];
     if (msg.snr != null) parts.add('SNR ${msg.snr!.toStringAsFixed(1)} dB');
     if (msg.pathLen != null) {
       final hops = msg.pathLen == 0xFF ? -1 : msg.pathLen! & 0x3F;
       if (hops <= 0) {
-        parts.add('Directo');
+        parts.add(l10n.commonDirect);
       } else {
-        parts.add('$hops hop${hops > 1 ? 's' : ''}');
+        parts.add(
+          '$hops ${hops == 1 ? l10n.commonSingularHop : l10n.commonPluralHops}',
+        );
       }
     }
     return parts.join(' • ');
@@ -695,7 +703,7 @@ class _MessageBubble extends ConsumerWidget {
     final time = DateTime.fromMillisecondsSinceEpoch(message.timestamp * 1000);
     final timeStr =
         '${time.hour.toString().padLeft(2, '0')}:${time.minute.toString().padLeft(2, '0')}';
-    final meta = _metaSuffix(message);
+    final meta = _metaSuffix(context, message);
     final metaLine = meta.isNotEmpty ? '$timeStr • $meta' : timeStr;
 
     if (isMe) {

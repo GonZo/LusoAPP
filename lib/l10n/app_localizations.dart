@@ -2638,11 +2638,23 @@ abstract class AppLocalizations {
   /// **'O teu rádio'**
   String get chatYourRadio;
 
+  /// No description provided for @chatLastRepeater.
+  ///
+  /// In pt, this message translates to:
+  /// **'Último repetidor'**
+  String get chatLastRepeater;
+
   /// No description provided for @chatYouSent.
   ///
   /// In pt, this message translates to:
   /// **'Enviaste a mensagem'**
   String get chatYouSent;
+
+  /// No description provided for @chatSentMessage.
+  ///
+  /// In pt, this message translates to:
+  /// **'Enviou a mensagem'**
+  String get chatSentMessage;
 
   /// No description provided for @chatReceived.
   ///
@@ -2655,6 +2667,12 @@ abstract class AppLocalizations {
   /// In pt, this message translates to:
   /// **'Salto'**
   String get chatHopLabel;
+
+  /// No description provided for @chatHopOrderFarthest.
+  ///
+  /// In pt, this message translates to:
+  /// **'mais distante'**
+  String get chatHopOrderFarthest;
 
   /// No description provided for @chatRepeated.
   ///

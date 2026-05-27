@@ -412,15 +412,6 @@ class _PrivateChatScreenState extends ConsumerState<PrivateChatScreen> {
     );
   }
 
-  bool _prefixMatch(Uint8List a, Uint8List b) {
-    final len = a.length < b.length ? a.length : b.length;
-    if (len < 4) return false;
-    for (var i = 0; i < len && i < 6; i++) {
-      if (a[i] != b[i]) return false;
-    }
-    return true;
-  }
-
   bool _prefixMatch6(Uint8List a, Uint8List b) {
     if (a.length < 6 || b.length < 6) return false;
     for (var i = 0; i < 6; i++) {
@@ -429,16 +420,17 @@ class _PrivateChatScreenState extends ConsumerState<PrivateChatScreen> {
     return true;
   }
 
-  /// Convert a `List<int>` of uint32-LE values (as decoded from PathDiscoveryPush)
-  /// back into the raw byte sequence the firmware expects as path bytes.
-  Uint8List _outPathToBytes(List<int> outPath) {
-    final bytes = Uint8List(outPath.length * 4);
+  /// Convert decoded path hops back into raw path bytes expected by tracePath.
+  ///
+  /// [hashSize] is the wire width per hop hash (1, 2, or 3 bytes).
+  Uint8List _outPathToBytes(List<int> outPath, int hashSize) {
+    final size = hashSize.clamp(1, 3);
+    final bytes = Uint8List(outPath.length * size);
     var i = 0;
     for (final val in outPath) {
-      bytes[i++] = val & 0xFF;
-      bytes[i++] = (val >> 8) & 0xFF;
-      bytes[i++] = (val >> 16) & 0xFF;
-      bytes[i++] = (val >> 24) & 0xFF;
+      for (var b = 0; b < size; b++) {
+        bytes[i++] = (val >> (8 * b)) & 0xFF;
+      }
     }
     return bytes;
   }
@@ -459,30 +451,28 @@ class _PrivateChatScreenState extends ConsumerState<PrivateChatScreen> {
 
     final cached = ref.read(pathCacheProvider)[_prefix6Hex];
     if (cached != null && cached.hops.isNotEmpty) {
-      pathBytes = _outPathToBytes(cached.hops);
+      pathBytes = _outPathToBytes(cached.hops, cached.hashSize);
     } else {
       // Discover the path first — firmware needs hop-hash bytes, not the public key.
       final pubKeyPrefix = contact.publicKey.sublist(0, 6);
-      final completer = Completer<List<int>?>();
+      final completer = Completer<PathCacheEntry?>();
       late StreamSubscription<CompanionResponse> sub;
       sub = service.responses.listen((r) {
         if (completer.isCompleted) return;
         if (r is PathDiscoveryPush &&
             _prefixMatch6(r.pubKeyPrefix, pubKeyPrefix)) {
-          completer.complete(r.outPath);
+          completer.complete((hops: r.outPath, hashSize: r.outHashSize));
         }
       });
 
       await service.sendPathDiscovery(contact.publicKey);
 
-      final outPath = await completer.future
+      final discovered = await completer.future
           .timeout(const Duration(seconds: 15), onTimeout: () => null)
           .whenComplete(sub.cancel);
 
-      if (outPath != null && outPath.isNotEmpty) {
-        pathBytes = _outPathToBytes(
-          outPath,
-        ); // NOTE: re-encoding fixed in Commit 3
+      if (discovered != null && discovered.hops.isNotEmpty) {
+        pathBytes = _outPathToBytes(discovered.hops, discovered.hashSize);
       }
     }
 

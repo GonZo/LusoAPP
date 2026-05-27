@@ -1355,13 +1355,22 @@ class AppLocalizationsPt extends AppLocalizations {
   String get chatYourRadio => 'O teu rádio';
 
   @override
+  String get chatLastRepeater => 'Último repetidor';
+
+  @override
   String get chatYouSent => 'Enviaste a mensagem';
+
+  @override
+  String get chatSentMessage => 'Enviou a mensagem';
 
   @override
   String get chatReceived => 'Recebeu a mensagem';
 
   @override
   String get chatHopLabel => 'Salto';
+
+  @override
+  String get chatHopOrderFarthest => 'mais distante';
 
   @override
   String get chatRepeated => 'Repetiu';

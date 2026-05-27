@@ -98,9 +98,9 @@ class Contact extends Equatable {
   /// Name to show in the UI: [customName] if set, [name] if non-empty, else [shortId].
   String get displayName {
     if (customName != null && customName!.trim().isNotEmpty) {
-      return customName!.trim();
+      return _san(customName!.trim());
     }
-    if (name.isNotEmpty) return name;
+    if (name.isNotEmpty) return _san(name);
     return shortId;
   }
 

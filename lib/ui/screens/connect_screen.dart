@@ -22,6 +22,41 @@ part 'parts/connect_progress_card.dart';
 // ---------------------------------------------------------------------------
 const _showSummitEdition = false;
 
+String _sanitizeUtf16Ui(String s) {
+  for (var i = 0; i < s.length; i++) {
+    final c = s.codeUnitAt(i);
+    if (c >= 0xD800 && c <= 0xDFFF) {
+      final buf = StringBuffer();
+      for (var j = 0; j < s.length; j++) {
+        final u = s.codeUnitAt(j);
+        if (u >= 0xD800 && u <= 0xDBFF) {
+          if (j + 1 < s.length) {
+            final u2 = s.codeUnitAt(j + 1);
+            if (u2 >= 0xDC00 && u2 <= 0xDFFF) {
+              buf.write(s[j]);
+              buf.write(s[j + 1]);
+              j++;
+              continue;
+            }
+          }
+          buf.writeCharCode(0xFFFD);
+        } else if (u >= 0xDC00 && u <= 0xDFFF) {
+          buf.writeCharCode(0xFFFD);
+        } else {
+          buf.write(s[j]);
+        }
+      }
+      return buf.toString();
+    }
+  }
+  return s;
+}
+
+String _safeUiName(String? value, {required String fallback}) {
+  final sanitized = _sanitizeUtf16Ui(value ?? '').trim();
+  return sanitized.isEmpty ? fallback : sanitized;
+}
+
 // ---------------------------------------------------------------------------
 // Composite model — a discovered device paired with its connection type.
 // ---------------------------------------------------------------------------
@@ -430,7 +465,7 @@ class _ConnectScreenState extends ConsumerState<ConnectScreen> {
       _cachedChannelCount = ref.read(radioChannelsSnapshotProvider).length;
     });
     final connection = ref.read(connectionProvider.notifier);
-    final name = target.device.name;
+    final name = _safeUiName(target.device.name, fallback: target.device.id);
     bool ok;
 
     switch (target.type) {
@@ -520,10 +555,11 @@ class _ConnectScreenState extends ConsumerState<ConnectScreen> {
     }
 
     setState(() {
+      final safeLastName = _safeUiName(last.name, fallback: last.id);
       _connectingTarget = _ConnectTarget(
         device: RadioDevice(
           id: last.id,
-          name: last.name,
+          name: safeLastName,
           type:
               last.type == 'ble' ? RadioDeviceType.ble : RadioDeviceType.serial,
         ),
@@ -548,15 +584,16 @@ class _ConnectScreenState extends ConsumerState<ConnectScreen> {
     _cancelledByUser = false;
 
     final connection = ref.read(connectionProvider.notifier);
+    final safeLastName = _safeUiName(last.name, fallback: last.id);
     bool ok;
     if (last.type == 'ble') {
-      ok = await connection.connectBle(last.id, last.name);
+      ok = await connection.connectBle(last.id, safeLastName);
     } else if (last.type == 'webSerial' || last.type == 'webSerialKiss') {
       // Port is confirmed in-registry by the isRegistered guard above.
       // No browser picker is shown — the existing JS handle is reused.
       ok = await connection.connectWebSerial(
         last.id,
-        last.name,
+        safeLastName,
         mode:
             last.type == 'webSerialKiss'
                 ? ConnectionMode.kiss
@@ -565,7 +602,7 @@ class _ConnectScreenState extends ConsumerState<ConnectScreen> {
     } else {
       ok = await connection.connectSerial(
         last.id,
-        last.name,
+        safeLastName,
         mode:
             last.type == 'serialKiss'
                 ? ConnectionMode.kiss
@@ -698,7 +735,10 @@ class _ConnectScreenState extends ConsumerState<ConnectScreen> {
             )
             .firstOrNull
             ?.name;
-    final displayName = (savedName != null) ? savedName : target.device.name;
+    final displayName = _safeUiName(
+      savedName ?? target.device.name,
+      fallback: target.device.id,
+    );
 
     // Subtitle: MAC address + signal strength to distinguish radios.
     final rssi = target.device.rssi;
@@ -730,7 +770,9 @@ class _ConnectScreenState extends ConsumerState<ConnectScreen> {
           backgroundColor: theme.colorScheme.primaryContainer,
           child: Icon(target.icon, color: theme.colorScheme.onPrimaryContainer),
         ),
-        title: Text(target.device.name),
+        title: Text(
+          _safeUiName(target.device.name, fallback: target.device.id),
+        ),
         subtitle: Text(target.typeLabel, style: theme.textTheme.bodySmall),
         trailing: const Icon(Icons.arrow_forward_ios, size: 16),
         onTap: () => _connectTo(target),
@@ -879,7 +921,7 @@ class _ConnectScreenState extends ConsumerState<ConnectScreen> {
                                 ),
                               ),
                               subtitle: Text(
-                                last.name,
+                                _safeUiName(last.name, fallback: last.id),
                                 style: TextStyle(
                                   color: theme.colorScheme.onPrimaryContainer
                                       .withAlpha(180),
@@ -966,7 +1008,9 @@ class _ConnectScreenState extends ConsumerState<ConnectScreen> {
                                             : Icons.usb,
                                       ),
                                     ),
-                                    title: Text(d.name),
+                                    title: Text(
+                                      _safeUiName(d.name, fallback: d.id),
+                                    ),
                                     subtitle: Text(
                                       d.type == 'ble'
                                           ? 'Bluetooth LE'
@@ -1118,7 +1162,12 @@ class _ConnectScreenState extends ConsumerState<ConnectScreen> {
                                           theme.colorScheme.onPrimaryContainer,
                                     ),
                                   ),
-                                  title: Text(target.device.name),
+                                  title: Text(
+                                    _safeUiName(
+                                      target.device.name,
+                                      fallback: target.device.id,
+                                    ),
+                                  ),
                                   subtitle: Text(
                                     '${target.typeLabel}$rssiSuffix',
                                   ),
