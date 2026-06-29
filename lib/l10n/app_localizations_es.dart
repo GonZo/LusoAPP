@@ -282,6 +282,20 @@ class AppLocalizationsEs extends AppLocalizations {
   String get commonOk => 'Ok';
 
   @override
+  String get pathHashMigrationNoticeTitle => 'Aviso de red';
+
+  @override
+  String get pathHashMigrationNoticeBody =>
+      'La red cambiará al modo hash de 2 bytes después del 2/7/2026 (2 de julio). La aplicación configurará automáticamente tu radio en esa fecha.';
+
+  @override
+  String get pathHashMigrationAppliedTitle => 'Red actualizada';
+
+  @override
+  String get pathHashMigrationAppliedBody =>
+      'Tu radio ha sido actualizado automáticamente al modo hash de 2 bytes a partir del 2/7/2026.';
+
+  @override
   String get commonLoading => 'Cargando...';
 
   @override

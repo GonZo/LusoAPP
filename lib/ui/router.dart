@@ -1,3 +1,4 @@
+import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
@@ -24,8 +25,13 @@ import 'apps/topology/topology_screen.dart';
 import 'apps/data_export/data_export_screen.dart';
 import 'screens/repeater_screen.dart';
 
+/// A key wired into GoRouter so other parts of the app (e.g. modal notices
+/// in main.dart) can obtain a valid in-tree Navigator context for showDialog.
+final rootNavigatorKey = GlobalKey<NavigatorState>();
+
 final routerProvider = Provider<GoRouter>((ref) {
   return GoRouter(
+    navigatorKey: rootNavigatorKey,
     initialLocation: '/connect',
     // Widget click intents arrive as `meshcore-widget://...` URIs and would
     // otherwise hit GoRouter's "no route" page. The actual action is handled

@@ -16,8 +16,9 @@ import 'services/plan333_service.dart';
 import 'services/sos_service.dart';
 import 'services/storage_service.dart';
 import 'services/widget_service.dart';
+import 'protocol/models.dart';
 import 'l10n/l10n.dart';
-import 'ui/router.dart';
+import 'ui/router.dart' show routerProvider, rootNavigatorKey;
 import 'ui/theme.dart';
 
 Future<void> main() async {
@@ -44,17 +45,119 @@ class McAppPt extends ConsumerStatefulWidget {
 final _lifecycleObserver = AppLifecycleObserver();
 
 class _McAppPtState extends ConsumerState<McAppPt> {
+  ProviderSubscription<DeviceInfo?>? _deviceInfoSub;
+  bool _didShowPathHashMigrationModal = false;
+  bool _didApplyPathHashMigration = false;
+  bool _isStorageReady = false;
+
   @override
   void initState() {
     super.initState();
     WidgetsBinding.instance.addObserver(_lifecycleObserver);
+    _listenPathHashMigrationNotice();
     _initStorage();
   }
 
   @override
   void dispose() {
+    _deviceInfoSub?.close();
     WidgetsBinding.instance.removeObserver(_lifecycleObserver);
     super.dispose();
+  }
+
+  void _listenPathHashMigrationNotice() {
+    _deviceInfoSub = ref.listenManual<DeviceInfo?>(deviceInfoProvider, (
+      previous,
+      next,
+    ) {
+      _maybeShowPathHashMigrationNotice(next);
+      _maybeApplyPathHashMigration(next);
+    });
+
+    // If the provider already has a value when the listener is attached,
+    // evaluate it immediately so the notice is not missed on app startup.
+    _maybeShowPathHashMigrationNotice(ref.read(deviceInfoProvider));
+    _maybeApplyPathHashMigration(ref.read(deviceInfoProvider));
+  }
+
+  void _maybeShowPathHashMigrationNotice(DeviceInfo? info) {
+    if (_didShowPathHashMigrationModal) return;
+    if (!_isStorageReady) return; // wait until app has finished loading
+    if (info == null) return;
+
+    final mode = info.pathHashMode;
+    // 0 = explicit 1-byte mode; null = firmware did not report the field,
+    // which is treated as default 1-byte behavior.
+    if (mode != null && mode != 0) return;
+
+    // Warning only shown before the migration date.
+    if (!DateTime.now().isBefore(DateTime(2026, 7, 2))) return;
+
+    _didShowPathHashMigrationModal = true;
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      // Use the GoRouter navigator key — this context is always inside the
+      // Localizations / Navigator tree and is safe for showDialog.
+      final navContext = rootNavigatorKey.currentContext;
+      if (navContext == null) return;
+      final l10n = AppLocalizations.of(navContext);
+      final theme = Theme.of(navContext);
+      final colorScheme = theme.colorScheme;
+      showDialog<void>(
+        context: navContext,
+        barrierDismissible: true,
+        builder:
+            (ctx) => Dialog(
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(24),
+              ),
+              child: Padding(
+                padding: const EdgeInsets.fromLTRB(24, 28, 24, 20),
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Container(
+                      width: 64,
+                      height: 64,
+                      decoration: BoxDecoration(
+                        color: colorScheme.primaryContainer,
+                        shape: BoxShape.circle,
+                      ),
+                      child: Icon(
+                        Icons.cell_tower_rounded,
+                        size: 34,
+                        color: colorScheme.onPrimaryContainer,
+                      ),
+                    ),
+                    const SizedBox(height: 16),
+                    Text(
+                      l10n.pathHashMigrationNoticeTitle,
+                      style: theme.textTheme.titleLarge?.copyWith(
+                        fontWeight: FontWeight.bold,
+                      ),
+                      textAlign: TextAlign.center,
+                    ),
+                    const SizedBox(height: 12),
+                    Text(
+                      l10n.pathHashMigrationNoticeBody,
+                      style: theme.textTheme.bodyMedium?.copyWith(
+                        color: colorScheme.onSurfaceVariant,
+                      ),
+                      textAlign: TextAlign.center,
+                    ),
+                    const SizedBox(height: 24),
+                    SizedBox(
+                      width: double.infinity,
+                      child: FilledButton(
+                        onPressed: () => Navigator.of(ctx).pop(),
+                        child: Text(l10n.commonOk),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ),
+      );
+    });
   }
 
   Future<void> _initStorage() async {
@@ -152,6 +255,98 @@ class _McAppPtState extends ConsumerState<McAppPt> {
     // Wire home-screen widget button taps → in-app actions.
     WidgetService.onAction = _handleWidgetAction;
     await WidgetService.registerClickHandlers();
+
+    // Mark loading complete and evaluate the migration notice now that
+    // the app is fully ready (device info may have arrived already).
+    _isStorageReady = true;
+    _maybeShowPathHashMigrationNotice(ref.read(deviceInfoProvider));
+    _maybeApplyPathHashMigration(ref.read(deviceInfoProvider));
+  }
+
+  /// On or after 2/7/2026: automatically switch the radio to 2-byte path hash
+  /// mode and show a confirmation modal.
+  void _maybeApplyPathHashMigration(DeviceInfo? info) {
+    if (_didApplyPathHashMigration) return;
+    if (!_isStorageReady) return;
+    if (info == null) return;
+
+    final mode = info.pathHashMode;
+    if (mode != null && mode != 0) return; // already on 2-byte (or higher)
+
+    // Only apply on or after July 2, 2026.
+    if (DateTime.now().isBefore(DateTime(2026, 7, 2))) return;
+
+    _didApplyPathHashMigration = true;
+
+    // Send the command only when the radio is connected.
+    final svc = ref.read(radioServiceProvider);
+    final connected = ref.read(connectionProvider) == TransportState.connected;
+    if (svc != null && connected) {
+      svc.setPathHashMode(1).catchError((_) {});
+    }
+
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      final navContext = rootNavigatorKey.currentContext;
+      if (navContext == null) return;
+      final l10n = AppLocalizations.of(navContext);
+      final theme = Theme.of(navContext);
+      final colorScheme = theme.colorScheme;
+      showDialog<void>(
+        context: navContext,
+        barrierDismissible: true,
+        builder:
+            (ctx) => Dialog(
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(24),
+              ),
+              child: Padding(
+                padding: const EdgeInsets.fromLTRB(24, 28, 24, 20),
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Container(
+                      width: 64,
+                      height: 64,
+                      decoration: BoxDecoration(
+                        color: colorScheme.secondaryContainer,
+                        shape: BoxShape.circle,
+                      ),
+                      child: Icon(
+                        Icons.check_circle_rounded,
+                        size: 34,
+                        color: colorScheme.onSecondaryContainer,
+                      ),
+                    ),
+                    const SizedBox(height: 16),
+                    Text(
+                      l10n.pathHashMigrationAppliedTitle,
+                      style: theme.textTheme.titleLarge?.copyWith(
+                        fontWeight: FontWeight.bold,
+                      ),
+                      textAlign: TextAlign.center,
+                    ),
+                    const SizedBox(height: 12),
+                    Text(
+                      l10n.pathHashMigrationAppliedBody,
+                      style: theme.textTheme.bodyMedium?.copyWith(
+                        color: colorScheme.onSurfaceVariant,
+                      ),
+                      textAlign: TextAlign.center,
+                    ),
+                    const SizedBox(height: 24),
+                    SizedBox(
+                      width: double.infinity,
+                      child: FilledButton(
+                        onPressed: () => Navigator.of(ctx).pop(),
+                        child: Text(l10n.commonOk),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ),
+      );
+    });
   }
 
   void _handleWidgetAction(WidgetAction action) {

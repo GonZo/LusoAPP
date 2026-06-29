@@ -278,6 +278,20 @@ class AppLocalizationsEn extends AppLocalizations {
   String get commonOk => 'Ok';
 
   @override
+  String get pathHashMigrationNoticeTitle => 'Network notice';
+
+  @override
+  String get pathHashMigrationNoticeBody =>
+      'The network will change to 2-byte path hash mode after 2/7/2026 (July 2nd). The app will automatically configure your radio on that date.';
+
+  @override
+  String get pathHashMigrationAppliedTitle => 'Network updated';
+
+  @override
+  String get pathHashMigrationAppliedBody =>
+      'Your radio has been automatically switched to 2-byte path hash mode as of 2/7/2026.';
+
+  @override
   String get commonLoading => 'Loading...';
 
   @override

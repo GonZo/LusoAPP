@@ -592,6 +592,30 @@ abstract class AppLocalizations {
   /// **'Ok'**
   String get commonOk;
 
+  /// No description provided for @pathHashMigrationNoticeTitle.
+  ///
+  /// In pt, this message translates to:
+  /// **'Aviso da rede'**
+  String get pathHashMigrationNoticeTitle;
+
+  /// No description provided for @pathHashMigrationNoticeBody.
+  ///
+  /// In pt, this message translates to:
+  /// **'A rede mudará para o modo hash de 2 bytes após 2/7/2026 (2 de julho). A aplicação irá configurar automaticamente o seu rádio nessa data.'**
+  String get pathHashMigrationNoticeBody;
+
+  /// No description provided for @pathHashMigrationAppliedTitle.
+  ///
+  /// In pt, this message translates to:
+  /// **'Rede atualizada'**
+  String get pathHashMigrationAppliedTitle;
+
+  /// No description provided for @pathHashMigrationAppliedBody.
+  ///
+  /// In pt, this message translates to:
+  /// **'O seu rádio foi automaticamente atualizado para o modo hash de 2 bytes a partir de 2/7/2026.'**
+  String get pathHashMigrationAppliedBody;
+
   /// No description provided for @commonLoading.
   ///
   /// In pt, this message translates to:
