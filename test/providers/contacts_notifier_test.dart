@@ -231,7 +231,7 @@ void main() {
       container.read(contactsProvider.notifier).state = [chat, repeater];
 
       // Prune only chats, not repeaters
-      final config = PruneConfig(
+      const config = PruneConfig(
         daysThreshold: 7,
         pruneChats: true,
         pruneRepeaters: false,
@@ -281,7 +281,7 @@ void main() {
       container.read(contactsProvider.notifier).state = [chat, repeater, room];
 
       // Prune chats and repeaters, not rooms
-      final config = PruneConfig(
+      const config = PruneConfig(
         daysThreshold: 7,
         pruneChats: true,
         pruneRepeaters: true,
@@ -326,7 +326,7 @@ void main() {
       ];
 
       // Prune only contacts > 3 days old
-      final config = PruneConfig(
+      const config = PruneConfig(
         daysThreshold: 3,
         pruneChats: true,
         pruneRepeaters: true,
@@ -358,7 +358,7 @@ void main() {
       container.read(contactsProvider.notifier).state = [repeater];
 
       // Don't prune any type
-      final config = PruneConfig(
+      const config = PruneConfig(
         daysThreshold: 7,
         pruneChats: false,
         pruneRepeaters: false,

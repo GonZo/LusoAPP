@@ -21,6 +21,14 @@ class MainActivity : FlutterActivity() {
                     startRadioForeground(radioName)
                     result?.success(null)
                 }
+                "updateRadioForeground" -> {
+                    val radioName = call.argument<String>("radioName")
+                    val noiseFloor = call.argument<Int>("noiseFloor")
+                    val lastRssi = call.argument<Int>("lastRssi")
+                    val lastSnrDb = call.argument<Double>("lastSnrDb")
+                    updateRadioForeground(radioName, noiseFloor, lastRssi, lastSnrDb)
+                    result?.success(null)
+                }
                 "stopRadioForeground" -> {
                     stopRadioForeground()
                     result?.success(null)
@@ -41,6 +49,22 @@ class MainActivity : FlutterActivity() {
     private fun stopRadioForeground() {
         val intent = Intent(this, RadioForegroundService::class.java).apply {
             action = RadioForegroundService.ACTION_STOP
+        }
+        startService(intent)
+    }
+
+    private fun updateRadioForeground(
+        radioName: String?,
+        noiseFloor: Int?,
+        lastRssi: Int?,
+        lastSnrDb: Double?
+    ) {
+        val intent = Intent(this, RadioForegroundService::class.java).apply {
+            action = RadioForegroundService.ACTION_UPDATE
+            radioName?.let { putExtra(RadioForegroundService.EXTRA_RADIO_NAME, it) }
+            noiseFloor?.let { putExtra(RadioForegroundService.EXTRA_NOISE_FLOOR, it) }
+            lastRssi?.let { putExtra(RadioForegroundService.EXTRA_LAST_RSSI, it) }
+            lastSnrDb?.let { putExtra(RadioForegroundService.EXTRA_LAST_SNR_DB, it) }
         }
         startService(intent)
     }

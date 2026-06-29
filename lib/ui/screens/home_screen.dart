@@ -115,22 +115,22 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
 
     final channelsIcon = Badge(
       isLabelVisible: unreadChannels > 0,
-      label: Text(unreadChannels > 99 ? '99+' : '${unreadChannels}'),
+      label: Text(unreadChannels > 99 ? '99+' : '$unreadChannels'),
       child: const Icon(Icons.forum_outlined),
     );
     final channelsSelectedIcon = Badge(
       isLabelVisible: unreadChannels > 0,
-      label: Text(unreadChannels > 99 ? '99+' : '${unreadChannels}'),
+      label: Text(unreadChannels > 99 ? '99+' : '$unreadChannels'),
       child: const Icon(Icons.forum),
     );
     final contactsIcon = Badge(
       isLabelVisible: unreadContacts > 0,
-      label: Text(unreadContacts > 99 ? '99+' : '${unreadContacts}'),
+      label: Text(unreadContacts > 99 ? '99+' : '$unreadContacts'),
       child: const Icon(Icons.contacts_outlined),
     );
     final contactsSelectedIcon = Badge(
       isLabelVisible: unreadContacts > 0,
-      label: Text(unreadContacts > 99 ? '99+' : '${unreadContacts}'),
+      label: Text(unreadContacts > 99 ? '99+' : '$unreadContacts'),
       child: const Icon(Icons.contacts),
     );
 

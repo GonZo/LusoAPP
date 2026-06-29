@@ -793,6 +793,14 @@ class RepeaterStats {
 /// Configuration for automatic contact pruning.
 /// Specifies which contact types should be pruned and after how many days.
 class PruneConfig extends Equatable {
+  /// Load from JSON.
+  factory PruneConfig.fromJson(Map<String, dynamic> json) => PruneConfig(
+    daysThreshold: json['daysThreshold'] as int? ?? 7,
+    pruneChats: json['pruneChats'] as bool? ?? true,
+    pruneRepeaters: json['pruneRepeaters'] as bool? ?? true,
+    pruneRooms: json['pruneRooms'] as bool? ?? true,
+    pruneSensors: json['pruneSensors'] as bool? ?? true,
+  );
   const PruneConfig({
     required this.daysThreshold,
     required this.pruneChats,
@@ -845,15 +853,6 @@ class PruneConfig extends Equatable {
     'pruneRooms': pruneRooms,
     'pruneSensors': pruneSensors,
   };
-
-  /// Load from JSON.
-  factory PruneConfig.fromJson(Map<String, dynamic> json) => PruneConfig(
-    daysThreshold: json['daysThreshold'] as int? ?? 7,
-    pruneChats: json['pruneChats'] as bool? ?? true,
-    pruneRepeaters: json['pruneRepeaters'] as bool? ?? true,
-    pruneRooms: json['pruneRooms'] as bool? ?? true,
-    pruneSensors: json['pruneSensors'] as bool? ?? true,
-  );
 
   /// Create a copy with optional field overrides.
   PruneConfig copyWith({

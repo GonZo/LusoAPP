@@ -1029,6 +1029,20 @@ void main() {
 
       expect(result, isNull);
     });
+
+    test('returns null when out path uses reserved mode 3', () {
+      final payload = Uint8List.fromList([
+        pushPathDiscoveryResponse,
+        0x00, // reserved
+        0xAA, 0xBB, 0xCC, 0xDD, 0xEE, 0xFF, // pub_key_prefix
+        0xC0, // mode 3 (reserved), hop count 0
+        0x00, // in_path_len
+      ]);
+
+      final result = CompanionDecoder.decode(payload);
+
+      expect(result, isNull);
+    });
   });
 
   group('ControlDataPush (0x8E)', () {

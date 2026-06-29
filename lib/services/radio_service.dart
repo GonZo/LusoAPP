@@ -256,8 +256,13 @@ class RadioService {
     final totalLen = 1 + payload.length;
     final buf = BytesBuilder();
     buf.addByte(dirAppToRadio);
-    buf.addByte(totalLen & 0xFF);
-    buf.addByte((totalLen >> 8) & 0xFF);
+    final lenLsb = totalLen & 0xFF;
+    final lenMsb = (totalLen >> 8) & 0xFF;
+    if ((lenLsb | (lenMsb << 8)) != totalLen) {
+      throw StateError('Invalid frame length encoding for $totalLen bytes');
+    }
+    buf.addByte(lenLsb);
+    buf.addByte(lenMsb);
     buf.addByte(command);
     buf.add(payload);
     return buf.toBytes();

@@ -427,7 +427,7 @@ class _MapScreenState extends ConsumerState<MapScreen> {
                                 orientedTraceHops[hi],
                                 theme,
                                 distanceM: _distanceToHop(
-                                  orientedTraceHops!,
+                                  orientedTraceHops,
                                   hi,
                                 ),
                                 showSnr: hi == orientedTraceHops.length - 1,
@@ -499,7 +499,7 @@ class _MapScreenState extends ConsumerState<MapScreen> {
               onClear:
                   () => ref.read(traceResultProvider.notifier).state = null,
               onFit: () {
-                final pts = _tracePoints(orientedTraceHops!, selfPos);
+                final pts = _tracePoints(orientedTraceHops, selfPos);
                 if (pts.length > 1) _fitAll(pts);
               },
               theme: theme,
@@ -633,7 +633,7 @@ class _MapScreenState extends ConsumerState<MapScreen> {
     final last = hops.last;
     if (!first.hasGps || !last.hasGps) return hops;
 
-    final dist = const Distance();
+    const dist = Distance();
     final dFirst = dist.as(
       LengthUnit.Meter,
       selfPos,

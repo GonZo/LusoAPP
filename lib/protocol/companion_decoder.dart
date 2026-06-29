@@ -590,6 +590,8 @@ class CompanionDecoder {
 
     var offset = 7;
 
+    bool isReservedMode(int pathLenByte) => (pathLenByte >> 6) >= 3;
+
     List<int> readHops(int pathLenByte) {
       final hopCount = pathLenByte & 0x3F;
       final hashSize = (pathLenByte >> 6) + 1; // 1, 2, or 3
@@ -607,6 +609,7 @@ class CompanionDecoder {
     int hashSizeOf(int pathLenByte) => (pathLenByte >> 6) + 1;
 
     final outPathLenByte = data[offset++];
+    if (isReservedMode(outPathLenByte)) return null;
     final outPath = readHops(outPathLenByte);
     final outHashSize = hashSizeOf(outPathLenByte);
 
@@ -615,6 +618,7 @@ class CompanionDecoder {
     }
 
     final inPathLenByte = data[offset++];
+    if (isReservedMode(inPathLenByte)) return null;
     final inPath = readHops(inPathLenByte);
     final inHashSize = hashSizeOf(inPathLenByte);
 

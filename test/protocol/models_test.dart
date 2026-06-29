@@ -134,7 +134,7 @@ void main() {
         name: 'Chat',
         lastAdvertTimestamp: fiveDaysAgo,
       );
-      final config = PruneConfig(
+      const config = PruneConfig(
         daysThreshold: 3,
         pruneChats: true,
         pruneRepeaters: true,
@@ -158,7 +158,7 @@ void main() {
       );
 
       // Don't prune repeaters
-      final config = PruneConfig(
+      const config = PruneConfig(
         daysThreshold: 7,
         pruneChats: true,
         pruneRepeaters: false,
@@ -192,7 +192,7 @@ void main() {
       );
 
       // Prune only rooms
-      final config = PruneConfig(
+      const config = PruneConfig(
         daysThreshold: 7,
         pruneChats: false,
         pruneRepeaters: false,
@@ -205,7 +205,7 @@ void main() {
     });
 
     test('copyWith preserves unchanged fields', () {
-      final original = PruneConfig(
+      const original = PruneConfig(
         daysThreshold: 14,
         pruneChats: true,
         pruneRepeaters: false,
@@ -222,7 +222,7 @@ void main() {
     });
 
     test('toJson and fromJson round-trip', () {
-      final config = PruneConfig(
+      const config = PruneConfig(
         daysThreshold: 14,
         pruneChats: true,
         pruneRepeaters: false,

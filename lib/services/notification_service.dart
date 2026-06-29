@@ -430,6 +430,31 @@ class NotificationService {
     }
   }
 
+  /// Update the Android foreground notification with latest radio metrics.
+  /// No-op on non-Android platforms.
+  Future<void> updateRadioForeground({
+    String? radioName,
+    int? noiseFloor,
+    int? lastRssi,
+    double? lastSnrDb,
+  }) async {
+    if (kIsWeb || defaultTargetPlatform != TargetPlatform.android) {
+      return;
+    }
+    try {
+      const channel = MethodChannel('pt.meshcore.lusoapp/radio_service');
+      await channel.invokeMethod('updateRadioForeground', {
+        if (radioName != null) 'radioName': radioName,
+        if (noiseFloor != null) 'noiseFloor': noiseFloor,
+        if (lastRssi != null) 'lastRssi': lastRssi,
+        if (lastSnrDb != null) 'lastSnrDb': lastSnrDb,
+      });
+    } catch (e) {
+      // Log but don't crash if the platform method fails
+      print('Error updating radio foreground service: $e');
+    }
+  }
+
   /// Stop the Android foreground service and remove the persistent notification.
   /// Called when the BLE connection is lost or the user disconnects.
   /// On non-Android platforms, this is a no-op.
@@ -462,7 +487,7 @@ class NotificationService {
       presentAlert: true,
       presentSound: true,
     );
-    final details = NotificationDetails(
+    const details = NotificationDetails(
       android: androidDetails,
       iOS: iosDetails,
       macOS: iosDetails,

@@ -1048,6 +1048,17 @@ class ConnectionNotifier extends StateNotifier<TransportState> {
               .read(noiseFloorHistoryProvider.notifier)
               .add(response.noiseFloor);
           _ref.read(rssiHistoryProvider.notifier).add(response.lastRssi);
+          final nodeName = _ref.read(selfInfoProvider)?.name;
+          final fallbackName = _ref.read(lastDeviceProvider)?.name ?? 'Radio';
+          final displayName = _safeUiName(nodeName, fallback: fallbackName);
+          unawaited(
+            NotificationService.instance.updateRadioForeground(
+              radioName: displayName,
+              noiseFloor: response.noiseFloor,
+              lastRssi: response.lastRssi,
+              lastSnrDb: response.lastSnrDb,
+            ),
+          );
         case StatsPacketsResponse():
           _ref.read(radioStatsPacketsProvider.notifier).state = response;
         case AutoAddConfigResponse(:final bitmask, :final maxHops):
